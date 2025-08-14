@@ -19,3 +19,7 @@ Gemfile.lock
 
 node_modules/
 dist/
+src/**/*.js
+src/**/*.map
+server/**/*.js
+server/**/*.map
