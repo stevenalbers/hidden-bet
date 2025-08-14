@@ -85,7 +85,7 @@ function getSessionIdFromCookie(cookie: string | undefined) {
 
 function allSubmitted() {
   // Change this threshold as needed
-  return Object.keys(submissions).length >= 2;
+  return Object.keys(submissions).length >= 3;
 }
 
 // Attach sessionId to each ws connection

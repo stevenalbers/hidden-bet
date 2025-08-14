@@ -1,0 +1,108 @@
+console.log("=== SERVER STARTED ===");
+import express from "express";
+import session from "express-session";
+import cors from "cors";
+import { createServer } from "http";
+import { WebSocketServer } from "ws";
+import bodyParser from "body-parser";
+const PORT = 3001;
+const app = express();
+const submissions = {};
+let lastSubmitterSessionId = null;
+app.use(cors({
+    origin: "http://localhost:5173", // Adjust if your frontend runs elsewhere
+    credentials: true,
+}));
+app.use(session({
+    secret: "your-secret-key",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }, // Set to true if using HTTPS
+}));
+app.use(bodyParser.json());
+// Get my submission
+app.get("/my-submission", (req, res) => {
+    if (!req.session)
+        return res.sendStatus(500);
+    const text = submissions[req.session.id] || null;
+    res.json({ text });
+});
+// Submit text
+app.post("/submit", (req, res) => {
+    const { text } = req.body;
+    if (!req.session)
+        return res.sendStatus(500);
+    submissions[req.session.id] = text;
+    console.log("sending text:", text);
+    lastSubmitterSessionId = req.session.id;
+    res.json({ success: true });
+    broadcastSubmissions();
+});
+// Clear all submissions
+app.post("/clear-submissions", (_req, res) => {
+    for (const key in submissions) {
+        delete submissions[key];
+    }
+    lastSubmitterSessionId = null;
+    res.json({ success: true });
+    console.log("Broadcasting CLEAR to all clients:", wss.clients.size);
+    wss.clients.forEach((client) => {
+        if (client.readyState === 1) {
+            console.log("Sending CLEAR to client", client.sessionId);
+            client.send(JSON.stringify({ type: "clear" }));
+        }
+    });
+});
+// --- WebSocket setup ---
+const server = createServer(app);
+const wss = new WebSocketServer({ server });
+// Helper to parse session ID from cookie
+function getSessionIdFromCookie(cookie) {
+    if (!cookie)
+        return null;
+    const match = cookie.match(/connect\.sid=s%3A([^.;]+)/);
+    return match ? match[1] : null;
+}
+function allSubmitted() {
+    // Change this threshold as needed
+    return Object.keys(submissions).length >= 3;
+}
+// Attach sessionId to each ws connection
+wss.on("connection", function connection(ws, req) {
+    console.log("WebSocket connection established");
+    const sessionId = getSessionIdFromCookie(req.headers.cookie);
+    ws.sessionId = sessionId;
+    // On connect, send current state
+    if (allSubmitted() || (sessionId && sessionId === lastSubmitterSessionId)) {
+        ws.send(JSON.stringify({
+            type: "all-submissions",
+            submissions: allSubmitted() ? submissions : null,
+        }));
+    }
+    else {
+        ws.send(JSON.stringify({
+            type: "all-submissions",
+            submissions: null,
+        }));
+    }
+});
+function broadcastSubmissions() {
+    wss.clients.forEach((client) => {
+        console.log("submit", client.sessionId);
+        if (allSubmitted() || client.sessionId === lastSubmitterSessionId) {
+            client.send(JSON.stringify({
+                type: "all-submissions",
+                submissions: allSubmitted() ? submissions : null,
+            }));
+        }
+        else if (client.readyState === 1) {
+            client.send(JSON.stringify({
+                type: "all-submissions",
+                submissions: null,
+            }));
+        }
+    });
+}
+server.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+});
