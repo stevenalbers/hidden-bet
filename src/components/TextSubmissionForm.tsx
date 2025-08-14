@@ -2,9 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 const WS_URL =
   import.meta.env.VITE_WS_URL ||
-  (window.location.hostname === "localhost"
-    ? "ws://localhost:3001"
-    : `wss://${window.location.hostname}/api/ws`);
+  (window.location.hostname === "localhost" ? "ws://localhost:3001" : `wss://${window.location.hostname}/api/ws`);
 
 export default function TextSubmissionForm() {
   const [text, setText] = useState("");
@@ -14,7 +12,7 @@ export default function TextSubmissionForm() {
 
   // Setup WebSocket connection
   useEffect(() => {
-    fetch("http://localhost:3001/my-submission", {
+    fetch(`${WS_URL}/my-submission`, {
       credentials: "include",
     })
       .then((res) => res.json())
@@ -55,7 +53,7 @@ export default function TextSubmissionForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("http://localhost:3001/submit", {
+    await fetch(`${WS_URL}/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -67,7 +65,7 @@ export default function TextSubmissionForm() {
   };
 
   const handleClear = async () => {
-    await fetch("http://localhost:3001/clear-submissions", {
+    await fetch(`${WS_URL}/clear-submissions`, {
       method: "POST",
       credentials: "include",
     });
