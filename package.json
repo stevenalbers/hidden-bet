@@ -3,11 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "vite",
+    "dev:backend": "NODE_ENV=development ts-node --project tsconfig.node.json api/index.ts",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "ts-node --project tsconfig.node.json server/index.ts",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
@@ -15,8 +16,10 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
+    "ioredis": "^5.7.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "redis": "^5.8.1",
     "ws": "^8.18.3"
   },
   "devDependencies": {
@@ -24,10 +27,12 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/express-session": "^1.18.2",
+    "@types/ioredis": "^4.28.10",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^7.6.0",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
