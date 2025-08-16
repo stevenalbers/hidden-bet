@@ -10,5 +10,5 @@
     "baseUrl": "./src",
     "moduleResolution": "node"
   },
-  "include": ["src", "api"]
+  "include": ["src", "api", "lib", "server.ts"]
 }

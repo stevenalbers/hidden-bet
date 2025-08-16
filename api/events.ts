@@ -1,8 +1,8 @@
 // api/events.ts
 import type { VercelResponse } from "@vercel/node";
-import { getRedisClient } from "./_lib/redis";
-import { sessionMiddleware } from "./_lib/middleware";
-import { RequestWithSession } from "./_lib/types";
+import { getRedisClient } from "../lib/redis";
+import { sessionMiddleware } from "../lib/middleware";
+import { RequestWithSession } from "../lib/types";
 
 export default async function handler(req: RequestWithSession, res: VercelResponse) {
   await sessionMiddleware(req, res);

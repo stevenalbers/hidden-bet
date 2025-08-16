@@ -1,8 +1,8 @@
 // api/my-submission.ts
 import type { VercelResponse } from "@vercel/node";
-import type { RequestWithSession } from "./_lib/types";
-import { getRedisClient } from "./_lib/redis";
-import { sessionMiddleware } from "./_lib/middleware";
+import type { RequestWithSession } from "../lib/types";
+import { getRedisClient } from "../lib/redis";
+import { sessionMiddleware } from "../lib/middleware";
 
 export default async function handler(req: RequestWithSession, res: VercelResponse) {
   try {
@@ -14,26 +14,26 @@ export default async function handler(req: RequestWithSession, res: VercelRespon
 
     const redis = getRedisClient();
     if (!redis) {
-      console.error('Redis client not initialized');
+      console.error("Redis client not initialized");
       return res.status(500).json({ error: "Database connection failed" });
     }
 
     if (!req.session) {
-      console.error('No session found');
+      console.error("No session found");
       return res.status(500).json({ error: "No session" });
     }
 
-    console.log('Fetching submission for session:', req.session.id);
-    
+    console.log("Fetching submission for session:", req.session.id);
+
     const text = await redis.hget("submissions", req.session.id);
-    console.log('Fetched text:', text);
+    console.log("Fetched text:", text);
 
     return res.json({ text: text || null });
   } catch (error) {
-    console.error('Handler error:', error);
-    return res.status(500).json({ 
+    console.error("Handler error:", error);
+    return res.status(500).json({
       error: "Internal server error",
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === "development" ? (error as any).message : undefined,
     });
   }
 }
