@@ -1,32 +1,32 @@
 import React, { useEffect, useRef, useState } from "react";
 
-const WS_URL =
-  import.meta.env.VITE_WS_URL ||
-  (window.location.hostname === "localhost" ? "ws://localhost:3001" : `wss://${window.location.hostname}/api/ws`);
+const BASE_URL = import.meta.env.VITE_API_URL || 
+  (window.location.hostname === "localhost" ? "http://localhost:3001" : `https://${window.location.hostname}/api`);
 
 export default function TextSubmissionForm() {
   const [text, setText] = useState("");
   const [mySubmission, setMySubmission] = useState<string | null>(null);
   const [allSubmissions, setAllSubmissions] = useState<{ [key: string]: string } | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
-  // Setup WebSocket connection
   useEffect(() => {
-    fetch(`${WS_URL}/my-submission`, {
+    // Get initial submission
+    fetch(`${BASE_URL}/my-submission`, {
       credentials: "include",
     })
       .then((res) => res.json())
       .then((data) => setMySubmission(data.text));
 
-    const ws = new WebSocket(WS_URL);
-    wsRef.current = ws;
+    // Setup SSE connection
+    const eventSource = new EventSource(`${BASE_URL}/events`);
+    eventSourceRef.current = eventSource;
 
-    ws.onmessage = (event) => {
+    eventSource.onmessage = (event) => {
       let msg;
       try {
         msg = JSON.parse(event.data);
       } catch (err) {
-        console.error("Failed to parse WebSocket message as JSON:", event.data, err);
+        console.error("Failed to parse SSE message as JSON:", event.data, err);
         return;
       }
       console.log("msg received", msg);
@@ -34,10 +34,9 @@ export default function TextSubmissionForm() {
         setMySubmission(null);
         setAllSubmissions(null);
         setText("");
-        return; // <-- Ignore any further processing for this message
+        return;
       }
       if (msg.type === "all-submissions") {
-        // Only update if submissions is not null
         if (msg.submissions !== null) {
           setAllSubmissions(msg.submissions);
         } else {
@@ -47,13 +46,13 @@ export default function TextSubmissionForm() {
     };
 
     return () => {
-      ws.close();
+      eventSource.close();
     };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch(`${WS_URL}/submit`, {
+    await fetch(`${BASE_URL}/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -61,11 +60,10 @@ export default function TextSubmissionForm() {
     });
     setMySubmission(text);
     setText("");
-    // No need to fetch all submissions; will get update via WebSocket
   };
 
   const handleClear = async () => {
-    await fetch(`${WS_URL}/clear-submissions`, {
+    await fetch(`${BASE_URL}/clear-submissions`, {
       method: "POST",
       credentials: "include",
     });

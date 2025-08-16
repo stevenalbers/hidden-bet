@@ -2,18 +2,72 @@ import express from "express";
 import session from "express-session";
 import cors from "cors";
 import bodyParser from "body-parser";
+import Redis from "ioredis";
 
+// In-memory fallback for local development
+const inMemoryStore: {
+  submissions: { [key: string]: string };
+  lastSubmitter: string | null;
+  connectedClients: Set<string>;
+} = {
+  submissions: {},
+  lastSubmitter: null,
+  connectedClients: new Set(),
+};
+
+// Initialize Redis with error handling
+let redis: Redis | null = null;
+try {
+  console.log("redis url:", process.env.REDIS_URL);
+  if (process.env.REDIS_URL) {
+    redis = new Redis(process.env.REDIS_URL);
+    console.log("Redis connected successfully");
+  } else {
+    console.log("No REDIS_URL provided, using in-memory storage");
+  }
+} catch (error) {
+  console.log("Redis connection failed, using in-memory storage:", error);
+}
+
+// Helper functions that work with both Redis and in-memory storage
+async function getSubmissions() {
+  if (redis) {
+    const submissions = await redis.hgetall("submissions");
+    return Object.keys(submissions).length > 0 ? submissions : null;
+  }
+  return Object.keys(inMemoryStore.submissions).length > 0 ? inMemoryStore.submissions : null;
+}
+
+async function getLastSubmitter() {
+  if (redis) {
+    return await redis.get("lastSubmitter");
+  }
+  return inMemoryStore.lastSubmitter;
+}
+
+async function clearSubmissions() {
+  if (redis) {
+    await redis.del("submissions", "lastSubmitter");
+  } else {
+    inMemoryStore.submissions = {};
+    inMemoryStore.lastSubmitter = null;
+  }
+}
+
+async function allSubmitted() {
+  if (redis) {
+    const count = await redis.hlen("submissions");
+    return count >= 3;
+  }
+  return Object.keys(inMemoryStore.submissions).length >= 3;
+}
+
+// Shared middleware setup
 const app = express();
-
-const submissions: { [sessionId: string]: string } = {};
-let lastSubmitterSessionId: string | null = null;
-
-// Store SSE connections
-const clients: { id: string; res: express.Response }[] = [];
 
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || true, // true allows all origins
+    origin: process.env.CORS_ORIGIN || true,
     credentials: true,
   })
 );
@@ -23,14 +77,14 @@ app.use(
     secret: "your-secret-key",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false },
+    cookie: { secure: process.env.NODE_ENV === "production" },
   })
 );
 
 app.use(bodyParser.json());
 
-// SSE endpoint
-app.get("/events", (req, res) => {
+// API Routes
+app.get("/api/events", async (req, res) => {
   if (!req.session) return res.sendStatus(500);
 
   res.set({
@@ -41,84 +95,88 @@ app.get("/events", (req, res) => {
   res.flushHeaders();
 
   const clientId = req.session.id;
-  clients.push({ id: clientId, res });
+
+  if (redis) {
+    await redis.sadd("connected_clients", clientId);
+  } else {
+    inMemoryStore.connectedClients.add(clientId);
+  }
 
   // Send initial state
-  sendAllSubmissions(clientId);
+  const [submissions, lastSubmitter, isAll] = await Promise.all([getSubmissions(), getLastSubmitter(), allSubmitted()]);
 
-  req.on("close", () => {
-    const idx = clients.findIndex((c) => c.id === clientId);
-    if (idx !== -1) clients.splice(idx, 1);
-  });
-});
-
-// Get my submission
-app.get("/my-submission", (req, res) => {
-  if (!req.session) return res.sendStatus(500);
-  const text = submissions[req.session.id] || null;
-  res.json({ text });
-});
-
-// Submit text
-app.post("/submit", (req, res) => {
-  const { text } = req.body;
-  if (!req.session) return res.sendStatus(500);
-  submissions[req.session.id] = text;
-  lastSubmitterSessionId = req.session.id;
-  res.json({ success: true });
-  broadcastSubmissions();
-});
-
-// Clear all submissions
-app.post("/clear-submissions", (_req, res) => {
-  for (const key in submissions) {
-    delete submissions[key];
-  }
-  lastSubmitterSessionId = null;
-  res.json({ success: true });
-  broadcastClear();
-});
-
-function allSubmitted() {
-  return Object.keys(submissions).length >= 3;
-}
-
-function sendAllSubmissions(clientId: string) {
-  const client = clients.find((c) => c.id === clientId);
-  if (!client) return;
-  const all = allSubmitted();
   const data = {
     type: "all-submissions",
-    submissions: all ? submissions : null,
+    submissions: isAll ? submissions : null,
   };
-  client.res.write(`data: ${JSON.stringify(data)}\n\n`);
-}
 
-function broadcastSubmissions() {
-  const all = allSubmitted();
-  clients.forEach((client) => {
-    if (all || client.id === lastSubmitterSessionId) {
-      client.res.write(
-        `data: ${JSON.stringify({
-          type: "all-submissions",
-          submissions: all ? submissions : null,
-        })}\n\n`
-      );
+  if (isAll || clientId === lastSubmitter) {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  } else {
+    res.write(`data: ${JSON.stringify({ ...data, submissions: null })}\n\n`);
+  }
+
+  req.on("close", () => {
+    if (redis) {
+      redis.srem("connected_clients", clientId);
     } else {
-      client.res.write(
-        `data: ${JSON.stringify({
-          type: "all-submissions",
-          submissions: null,
-        })}\n\n`
-      );
+      inMemoryStore.connectedClients.delete(clientId);
     }
   });
-}
+});
 
-function broadcastClear() {
-  clients.forEach((client) => {
-    client.res.write(`data: ${JSON.stringify({ type: "clear" })}\n\n`);
-  });
-}
+app.get("/api/my-submission", async (req, res) => {
+  if (!req.session) return res.sendStatus(500);
+  const text = redis ? await redis.hget("submissions", req.session.id) : inMemoryStore.submissions[req.session.id];
+  res.json({ text: text || null });
+});
+
+app.post("/api/submit", async (req, res) => {
+  const { text } = req.body;
+  if (!req.session) return res.sendStatus(500);
+
+  if (redis) {
+    await redis.hset("submissions", req.session.id, text);
+    await redis.set("lastSubmitter", req.session.id);
+  } else {
+    inMemoryStore.submissions[req.session.id] = text;
+    inMemoryStore.lastSubmitter = req.session.id;
+  }
+
+  const [submissions, isAll] = await Promise.all([getSubmissions(), allSubmitted()]);
+
+  const connectedClients = redis
+    ? await redis.smembers("connected_clients")
+    : Array.from(inMemoryStore.connectedClients);
+
+  for (const clientId of connectedClients) {
+    if (process.env.NODE_ENV === "development") {
+      const data = {
+        type: "all-submissions",
+        submissions: clientId === req.session?.id || isAll ? submissions : null,
+      };
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    }
+  }
+
+  res.json({ success: true });
+});
+
+app.post("/api/clear-submissions", async (req, res) => {
+  await clearSubmissions();
+
+  const connectedClients = redis
+    ? await redis.smembers("connected_clients")
+    : Array.from(inMemoryStore.connectedClients);
+
+  for (const clientId of connectedClients) {
+    if (process.env.NODE_ENV === "development") {
+      const data = { type: "clear", clientId };
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    }
+  }
+
+  res.json({ success: true });
+});
 
 export default app;
