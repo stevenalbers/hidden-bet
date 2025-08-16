@@ -1,3 +1,4 @@
+
 console.log("=== SERVER STARTED ===");
 
 import express from "express";
@@ -11,25 +12,28 @@ interface SessionWebSocket extends WebSocket {
   sessionId?: string | null;
 }
 
-const PORT = 3001;
+
+const PORT = process.env.PORT || 3001;
 const app = express();
 
 const submissions: { [sessionId: string]: string } = {};
 let lastSubmitterSessionId: string | null = null;
 
+
 app.use(
   cors({
-    origin: "http://localhost:5173", // Adjust if your frontend runs elsewhere
+    origin: true, // Allow all origins for Render deployment
     credentials: true,
   })
 );
 
+
 app.use(
   session({
-    secret: "your-secret-key",
+    secret: process.env.SESSION_SECRET || "your-secret-key",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }, // Set to true if using HTTPS
+    cookie: { secure: process.env.NODE_ENV === "production" },
   })
 );
 
@@ -136,5 +140,5 @@ function broadcastSubmissions() {
 }
 
 server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });

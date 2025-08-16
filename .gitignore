@@ -23,3 +23,5 @@ src/**/*.js
 src/**/*.map
 server/**/*.js
 server/**/*.map
+.vercel
+.env
