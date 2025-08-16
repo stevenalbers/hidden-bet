@@ -6,24 +6,38 @@ import cors from "cors";
 
 export async function sessionMiddleware(req: RequestWithSession, res: VercelResponse) {
   return new Promise<void>((resolve, reject) => {
-    const middleware = session({
-      secret: "your-secret-key",
-      resave: false,
-      saveUninitialized: true,
-      cookie: { secure: process.env.NODE_ENV === "production" },
-    });
-
-    const corsMiddleware = cors({
-      origin: true,
-      credentials: true,
-    });
-
-    corsMiddleware(req, res, (err) => {
-      middleware(req as any, res as any, (err) => {
-        if (err) return reject(err);
-        if (err) return reject(err);
-        resolve(undefined);
+    try {
+      const middleware = session({
+        secret: process.env.SESSION_SECRET || "your-secret-key",
+        resave: false,
+        saveUninitialized: true,
+        cookie: {
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "none",
+        },
       });
-    });
+
+      const corsMiddleware = cors({
+        origin: true,
+        credentials: true,
+      });
+
+      corsMiddleware(req, res, (err) => {
+        if (err) {
+          console.error("CORS middleware error:", err);
+          return reject(err);
+        }
+        middleware(req as any, res as any, (err) => {
+          if (err) {
+            console.error("Session middleware error:", err);
+            return reject(err);
+          }
+          resolve();
+        });
+      });
+    } catch (error) {
+      console.error("Middleware setup error:", error);
+      reject(error);
+    }
   });
 }
