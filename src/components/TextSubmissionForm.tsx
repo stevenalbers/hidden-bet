@@ -52,7 +52,7 @@ export default function TextSubmissionForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch(`${BASE_URL}/submit`, {
+    await fetch(`${BASE_URL}/hello`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
