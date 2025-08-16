@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/textsubmissionform.tsx","./api/index.ts","./api/server.ts"],"version":"5.8.3"}
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/textsubmissionform.tsx","./api/clear-submissions.ts","./api/events.ts","./api/index.ts","./api/my-submission.ts","./api/server.ts","./api/submit.ts","./api/_lib/middleware.ts","./api/_lib/redis.ts","./api/_lib/types.ts"],"version":"5.8.3"}
