@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 
-const WS_URL = "ws://localhost:3001";
+
+// Use the deployed Render backend URL for all API and WebSocket calls
+const API_BASE_URL = "https://hidden-bet-api.onrender.com";
+const WS_URL = "wss://hidden-bet-api.onrender.com";
 
 export default function TextSubmissionForm() {
   const [text, setText] = useState("");
@@ -10,13 +13,13 @@ export default function TextSubmissionForm() {
 
   // Setup WebSocket connection
   useEffect(() => {
-    fetch("http://localhost:3001/my-submission", {
+  fetch(`${API_BASE_URL}/my-submission`, {
       credentials: "include",
     })
       .then((res) => res.json())
       .then((data) => setMySubmission(data.text));
 
-    const ws = new WebSocket(WS_URL);
+  const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 
     ws.onmessage = (event) => {
@@ -45,7 +48,7 @@ export default function TextSubmissionForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("http://localhost:3001/submit", {
+  await fetch(`${API_BASE_URL}/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -57,7 +60,7 @@ export default function TextSubmissionForm() {
   };
 
   const handleClear = async () => {
-    await fetch("http://localhost:3001/clear-submissions", {
+  await fetch(`${API_BASE_URL}/clear-submissions`, {
       method: "POST",
       credentials: "include",
     });
