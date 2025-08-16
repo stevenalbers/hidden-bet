@@ -68,7 +68,7 @@ app.post("/clear-submissions", (_req, res) => {
   console.log("Broadcasting CLEAR to all clients:", wss.clients.size);
 
   wss.clients.forEach((client: SessionWebSocket) => {
-    if (client.readyState === 1) {
+    if (client.readyState === WebSocket.OPEN) {
       console.log("Sending CLEAR to client", client.sessionId);
       client.send(JSON.stringify({ type: "clear" }));
     }
@@ -89,7 +89,7 @@ function getSessionIdFromCookie(cookie: string | undefined) {
 
 function allSubmitted() {
   // Change this threshold as needed
-  return Object.keys(submissions).length >= 2;
+  return Object.keys(submissions).length >= 3;
 }
 
 // Attach sessionId to each ws connection
@@ -128,7 +128,7 @@ function broadcastSubmissions() {
           submissions: allSubmitted() ? submissions : null,
         })
       );
-    } else if (client.readyState === 1) {
+    } else if (client.readyState === WebSocket.OPEN) {
       client.send(
         JSON.stringify({
           type: "all-submissions",

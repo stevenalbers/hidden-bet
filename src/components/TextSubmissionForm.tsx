@@ -23,7 +23,13 @@ export default function TextSubmissionForm() {
     wsRef.current = ws;
 
     ws.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
+      let msg;
+      try {
+        msg = JSON.parse(event.data);
+      } catch (err) {
+        console.error("Failed to parse WebSocket message as JSON:", event.data, err);
+        return;
+      }
       console.log("msg received", msg);
       if (msg.type === "clear") {
         setMySubmission(null);
@@ -75,7 +81,7 @@ export default function TextSubmissionForm() {
           placeholder="Enter your text"
           disabled={!!mySubmission}
         />
-        <button type="submit" disabled={!!mySubmission || !text}>
+        <button type="submit" disabled={!!mySubmission || !text.trim()}>
           Submit
         </button>
       </form>
