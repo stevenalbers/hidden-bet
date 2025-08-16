@@ -21,6 +21,5 @@ node_modules/
 dist/
 src/**/*.js
 src/**/*.map
-api/**/*.js
-api/**/*.map
-.vercel
+server/**/*.js
+server/**/*.map
