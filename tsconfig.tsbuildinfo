@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/consts.ts","./src/main.tsx","./src/vite-env.d.ts","./src/components/adminpage.tsx","./src/components/playerpage.tsx","./src/components/submissionscontext.tsx","./src/components/textsubmissionform.tsx","./src/types/api.ts","./server/index.ts"],"version":"5.8.3"}
+{"root":["./src/app.tsx","./src/consts.ts","./src/main.tsx","./src/vite-env.d.ts","./src/components/adminpage.tsx","./src/components/playerpage.tsx","./src/components/submissionscontext.tsx","./src/types/api.ts","./server/index.ts"],"version":"5.8.3"}
