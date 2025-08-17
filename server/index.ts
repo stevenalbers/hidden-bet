@@ -1,4 +1,3 @@
-
 console.log("=== SERVER STARTED ===");
 
 import express from "express";
@@ -12,13 +11,10 @@ interface SessionWebSocket extends WebSocket {
   sessionId?: string | null;
 }
 
-
 const PORT = process.env.PORT || 3001;
 const app = express();
-
 const submissions: { [sessionId: string]: string } = {};
 let lastSubmitterSessionId: string | null = null;
-
 
 app.use(
   cors({
@@ -26,7 +22,6 @@ app.use(
     credentials: true,
   })
 );
-
 
 app.use(
   session({

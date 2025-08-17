@@ -1,9 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 
 
-// Use the deployed Render backend URL for all API and WebSocket calls
-const API_BASE_URL = "https://hidden-bet-api.onrender.com";
-const WS_URL = "wss://hidden-bet-api.onrender.com";
+// Use env variable, or infer from window.location, or fallback to localhost for local dev
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === "localhost"
+    ? "http://localhost:3001"
+    : `https://${window.location.hostname}`);
+
+const WS_URL =
+  import.meta.env.VITE_WS_URL ||
+  (window.location.hostname === "localhost"
+    ? "ws://localhost:3001"
+    : `wss://${window.location.hostname}`);
+
+
 
 export default function TextSubmissionForm() {
   const [text, setText] = useState("");
