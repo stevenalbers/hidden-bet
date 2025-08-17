@@ -26,14 +26,15 @@ export default function PlayerPage() {
 
   // If my submission is cleared from allSubmissions, allow resubmission
   useEffect(() => {
-    // If mySubmission exists, but is not present in allSubmissions (including when allSubmissions is empty/null), reset it
-    if (mySubmission) {
-      const stillExists =
-        allSubmissions &&
-        Object.values(allSubmissions).some(
-          (sub) =>
-            sub.name === mySubmission.name && sub.horse === mySubmission.horse && sub.wager === mySubmission.wager
-        );
+    // Only reset mySubmission if allSubmissions is not null (i.e., after a clear),
+    // and mySubmission is not present in allSubmissions
+    if (mySubmission && allSubmissions !== null) {
+      const stillExists = Object.values(allSubmissions).some(
+        (sub) =>
+          sub.name === mySubmission.name &&
+          sub.horse === mySubmission.horse &&
+          sub.wager === mySubmission.wager
+      );
       if (!stillExists) {
         setMySubmission(null);
       }

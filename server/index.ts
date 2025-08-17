@@ -7,8 +7,6 @@ import { createServer } from "http";
 import { WebSocket, WebSocketServer } from "ws";
 import bodyParser from "body-parser";
 
-const NUMBER_OF_PLAYERS = 4;
-
 interface SessionWebSocket extends WebSocket {
   sessionId?: string | null;
 }
@@ -62,8 +60,11 @@ app.post("/clear-submissions", (_req, res) => {
   lastSubmitterSessionId = null;
   res.json({ success: true });
 
+  console.log("Broadcasting CLEAR to all clients:", wss.clients.size);
+
   wss.clients.forEach((client: SessionWebSocket) => {
     if (client.readyState === WebSocket.OPEN) {
+      console.log("Sending CLEAR to client", client.sessionId);
       client.send(JSON.stringify({ type: "clear" }));
     }
   });
@@ -128,11 +129,14 @@ function getSessionIdFromCookie(cookie: string | undefined) {
 }
 
 function allSubmitted() {
-  return Object.keys(submissions).length >= NUMBER_OF_PLAYERS;
+  // Change this threshold as needed
+  return Object.keys(submissions).length >= 2;
 }
 
 // Attach sessionId to each ws connection
 wss.on("connection", function connection(ws, req) {
+  console.log("WebSocket connection established");
+
   const sessionId = getSessionIdFromCookie(req.headers.cookie);
   (ws as SessionWebSocket).sessionId = sessionId;
 
@@ -156,6 +160,8 @@ wss.on("connection", function connection(ws, req) {
 
 function broadcastSubmissions() {
   wss.clients.forEach((client: SessionWebSocket) => {
+    console.log("submit", client.sessionId);
+
     if (allSubmitted() || client.sessionId === lastSubmitterSessionId) {
       client.send(
         JSON.stringify({
