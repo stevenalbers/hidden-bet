@@ -1,3 +1,4 @@
+import { WS_URL, API_BASE_URL } from "../consts";
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 
 export type Submission = { name: string; horse: string; wager: number };
@@ -11,19 +12,9 @@ type SubmissionsContextType = {
 
 const SubmissionsContext = createContext<SubmissionsContextType | undefined>(undefined);
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (window.location.hostname === "localhost" ? "http://localhost:3001" : `https://${window.location.hostname}`);
-
-const WS_URL =
-  import.meta.env.VITE_WS_URL ||
-  (window.location.hostname === "localhost" ? "ws://localhost:3001" : `wss://${window.location.hostname}`);
-
 export function SubmissionsProvider({ children }: { children: React.ReactNode }) {
   const [allSubmissions, setAllSubmissions] = useState<{ [key: string]: Submission } | null>(null);
-  const [results, setResults] = useState<
-    { name: string; horse: string; wager: number; result: number }[] | null
-  >(null);
+  const [results, setResults] = useState<{ name: string; horse: string; wager: number; result: number }[] | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -64,7 +55,11 @@ export function SubmissionsProvider({ children }: { children: React.ReactNode })
     });
   };
 
-  return <SubmissionsContext.Provider value={{ allSubmissions, handleClear, wsRef, results }}>{children}</SubmissionsContext.Provider>;
+  return (
+    <SubmissionsContext.Provider value={{ allSubmissions, handleClear, wsRef, results }}>
+      {children}
+    </SubmissionsContext.Provider>
+  );
 }
 
 export function useSubmissions() {
