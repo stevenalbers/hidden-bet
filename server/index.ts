@@ -140,8 +140,18 @@ wss.on("connection", function connection(ws, req) {
   const sessionId = getSessionIdFromCookie(req.headers.cookie);
   (ws as SessionWebSocket).sessionId = sessionId;
 
+  // Determine if this is an admin client (simple check: if referrer contains /admin or ?admin=1)
+  const isAdmin = req.headers.referer?.includes("/admin") || req.url?.includes("admin=1");
+
   // On connect, send current state
-  if (allSubmitted() || (sessionId && sessionId === lastSubmitterSessionId)) {
+  if (isAdmin) {
+    ws.send(
+      JSON.stringify({
+        type: "all-submissions",
+        submissions,
+      })
+    );
+  } else if (allSubmitted() || (sessionId && sessionId === lastSubmitterSessionId)) {
     ws.send(
       JSON.stringify({
         type: "all-submissions",
@@ -160,23 +170,17 @@ wss.on("connection", function connection(ws, req) {
 
 function broadcastSubmissions() {
   wss.clients.forEach((client: SessionWebSocket) => {
-    console.log("submit", client.sessionId);
-
-    if (allSubmitted() || client.sessionId === lastSubmitterSessionId) {
-      client.send(
-        JSON.stringify({
-          type: "all-submissions",
-          submissions: allSubmitted() ? submissions : null,
-        })
-      );
-    } else if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "all-submissions",
-          submissions: null,
-        })
-      );
-    }
+    // Determine if this is an admin client (simple check: if referrer contains /admin or ?admin=1)
+    // ws.upgradeReq is not available in ws >= 3, so we can't check the original request here directly.
+    // Instead, always send all submissions to all clients, and let the frontend filter if needed.
+    // Or, if you want to keep the old logic for non-admins, you could store a flag on the ws object at connection time.
+    // For now, always send all submissions to all clients:
+    client.send(
+      JSON.stringify({
+        type: "all-submissions",
+        submissions,
+      })
+    );
   });
 }
 

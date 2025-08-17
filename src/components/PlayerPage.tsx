@@ -143,7 +143,7 @@ export default function PlayerPage() {
       )}
       <hr />
       <h3>All Submissions</h3>
-      {allSubmissions ? (
+      {allSubmissions && Object.keys(allSubmissions).length >= 2 ? (
         <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', flexWrap: 'wrap' }}>
           {/* Horse A Column */}
           <div style={{ flex: 1, minWidth: 0 }}>
