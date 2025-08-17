@@ -20,16 +20,9 @@ export default function PlayerPage() {
 
   // Start race animation when results arrive (i.e., admin triggers race)
   useEffect(() => {
-    console.log("results", results);
-
     if (results && results[0] && (results[0].horse === "Horse A" || results[0].horse === "Horse B")) {
       setRacing(true);
       setRaceWinner(results[0].horse as "Horse A" | "Horse B");
-      // End race after 10s (match admin)
-      const timeout = setTimeout(() => {
-        setRacing(false);
-      }, 10000);
-      return () => clearTimeout(timeout);
     } else {
       setRacing(false);
       setRaceWinner(null);
@@ -361,7 +354,11 @@ export default function PlayerPage() {
               boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
             }}
           >
-            <HorseRaceAnimation winner={raceWinner} finished={!racing && !!raceWinner} />
+            <HorseRaceAnimation
+              winner={raceWinner}
+              finished={!racing && !!raceWinner}
+              onRaceEnd={() => setRacing(false)}
+            />
             {/* Finish line */}
             <div
               style={{
