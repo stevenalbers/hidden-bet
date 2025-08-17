@@ -10,6 +10,28 @@ export default function PlayerPage() {
   const [mySubmission, setMySubmission] = useState<Submission | null>(null);
   const { allSubmissions, results } = useSubmissions();
 
+  // --- Race Animation State ---
+  const [racing, setRacing] = useState(false);
+  const [raceWinner, setRaceWinner] = useState<"Horse A" | "Horse B" | null>(null);
+
+  // Start race animation when results arrive (i.e., admin triggers race)
+  useEffect(() => {
+    console.log("results", results);
+
+    if (results && results[0] && (results[0].horse === "Horse A" || results[0].horse === "Horse B")) {
+      setRacing(true);
+      setRaceWinner(results[0].horse as "Horse A" | "Horse B");
+      // End race after 10s (match admin)
+      const timeout = setTimeout(() => {
+        setRacing(false);
+      }, 10000);
+      return () => clearTimeout(timeout);
+    } else {
+      setRacing(false);
+      setRaceWinner(null);
+    }
+  }, [results]);
+
   // Fetch my submission on mount
   useEffect(() => {
     fetch(`${API_BASE_URL}/my-submission`, {
@@ -56,8 +78,9 @@ export default function PlayerPage() {
   // Accordion state for All Submissions
   const [accordionOpen, setAccordionOpen] = useState(false);
 
-  // Show race animation if results are present
-  const showRace = !!results;
+  // Show race animation if racing or race just finished
+  const showRace =
+    racing || (results && results[0] && (results[0].horse === "Horse A" || results[0].horse === "Horse B"));
 
   const allSubmitted = allSubmissions && Object.keys(allSubmissions).length >= 2;
   return (
@@ -167,20 +190,22 @@ export default function PlayerPage() {
       <hr />
       {/* Show only one section depending on submission state */}
       {!allSubmitted ? (
-        <div style={{
-          padding: '1rem',
-          color: 'var(--accordion-fg, #fff)',
-          background: 'var(--accordion-bg, #222)',
-          border: '1px solid var(--accordion-border, #444)',
-          borderTop: 'none',
-          borderRadius: '0 0 8px 8px',
-          fontWeight: 700,
-          fontSize: 18,
-          letterSpacing: 0.5,
-          textAlign: 'center',
-          transition: 'background 0.2s, color 0.2s',
-          marginBottom: 16,
-        }}>
+        <div
+          style={{
+            padding: "1rem",
+            color: "var(--accordion-fg, #fff)",
+            background: "var(--accordion-bg, #222)",
+            border: "1px solid var(--accordion-border, #444)",
+            borderTop: "none",
+            borderRadius: "0 0 8px 8px",
+            fontWeight: 700,
+            fontSize: 18,
+            letterSpacing: 0.5,
+            textAlign: "center",
+            transition: "background 0.2s, color 0.2s",
+            marginBottom: 16,
+          }}
+        >
           Bets submitted: {allSubmissions ? Object.keys(allSubmissions).length : 0}/2
         </div>
       ) : (
@@ -188,26 +213,24 @@ export default function PlayerPage() {
           <button
             onClick={() => setAccordionOpen((open) => !open)}
             style={{
-              width: '100%',
-              textAlign: 'left',
+              width: "100%",
+              textAlign: "left",
               fontWeight: 700,
               fontSize: 18,
-              background: 'var(--accordion-bg, #eee)',
-              color: 'var(--accordion-fg, #222)',
-              border: '1px solid var(--accordion-border, #ccc)',
+              background: "var(--accordion-bg, #eee)",
+              color: "var(--accordion-fg, #222)",
+              border: "1px solid var(--accordion-border, #ccc)",
               borderRadius: 8,
-              padding: '0.75rem 1rem',
-              cursor: 'pointer',
+              padding: "0.75rem 1rem",
+              cursor: "pointer",
               marginBottom: 0,
-              outline: 'none',
-              transition: 'background 0.2s, color 0.2s',
+              outline: "none",
+              transition: "background 0.2s, color 0.2s",
             }}
             aria-expanded={accordionOpen}
           >
             The bets are in
-            <span style={{ float: 'right', fontWeight: 400 }}>
-              {accordionOpen ? '▲' : '▼'}
-            </span>
+            <span style={{ float: "right", fontWeight: 400 }}>{accordionOpen ? "▲" : "▼"}</span>
           </button>
           {/* Contrast theme styles for accordion and submit button */}
           <style>{`
@@ -233,28 +256,31 @@ export default function PlayerPage() {
           {accordionOpen && allSubmissions && Object.keys(allSubmissions).length >= 2 && (
             <div
               style={{
-                display: 'flex',
-                flexDirection: 'row',
-                gap: '1rem',
-                flexWrap: 'wrap',
-                border: '1px solid var(--accordion-border, #ccc)',
-                borderTop: 'none',
-                borderRadius: '0 0 8px 8px',
-                padding: '1rem',
-                background: 'var(--accordion-bg, #fafafa)',
-                color: 'var(--accordion-fg, #222)',
-                transition: 'background 0.2s, color 0.2s',
+                display: "flex",
+                flexDirection: "row",
+                gap: "1rem",
+                flexWrap: "wrap",
+                border: "1px solid var(--accordion-border, #ccc)",
+                borderTop: "none",
+                borderRadius: "0 0 8px 8px",
+                padding: "1rem",
+                background: "var(--accordion-bg, #fafafa)",
+                color: "var(--accordion-fg, #222)",
+                transition: "background 0.2s, color 0.2s",
               }}
             >
               {/* Horse A Column */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <h4 style={{ color: 'inherit' }}>Horse A</h4>
+                <h4 style={{ color: "inherit" }}>Horse A</h4>
                 <ul style={{ paddingLeft: 16 }}>
                   {Object.values(allSubmissions)
-                    .filter((sub) => sub.horse === 'Horse A')
+                    .filter((sub) => sub.horse === "Horse A")
                     .sort((a, b) => b.wager - a.wager)
                     .map((submission, idx) => (
-                      <li key={submission.name + submission.wager + idx} style={{ wordBreak: 'break-word', color: 'inherit' }}>
+                      <li
+                        key={submission.name + submission.wager + idx}
+                        style={{ wordBreak: "break-word", color: "inherit" }}
+                      >
                         {submission.name}, Wager: {submission.wager}
                       </li>
                     ))}
@@ -262,13 +288,16 @@ export default function PlayerPage() {
               </div>
               {/* Horse B Column */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <h4 style={{ color: 'inherit' }}>Horse B</h4>
+                <h4 style={{ color: "inherit" }}>Horse B</h4>
                 <ul style={{ paddingLeft: 16 }}>
                   {Object.values(allSubmissions)
-                    .filter((sub) => sub.horse === 'Horse B')
+                    .filter((sub) => sub.horse === "Horse B")
                     .sort((a, b) => b.wager - a.wager)
                     .map((submission, idx) => (
-                      <li key={submission.name + submission.wager + idx} style={{ wordBreak: 'break-word', color: 'inherit' }}>
+                      <li
+                        key={submission.name + submission.wager + idx}
+                        style={{ wordBreak: "break-word", color: "inherit" }}
+                      >
                         {submission.name}, Wager: {submission.wager}
                       </li>
                     ))}
@@ -295,14 +324,7 @@ export default function PlayerPage() {
               boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
             }}
           >
-            <HorseRaceAnimation
-              winner={
-                results && results[0] && (results[0].horse === "Horse A" || results[0].horse === "Horse B")
-                  ? (results[0].horse as "Horse A" | "Horse B")
-                  : null
-              }
-              finished={true}
-            />
+            <HorseRaceAnimation winner={raceWinner} finished={!racing && !!raceWinner} />
             {/* Finish line */}
             <div
               style={{
@@ -317,32 +339,37 @@ export default function PlayerPage() {
             />
           </div>
           {/* Show winner below animation after race */}
-          <div style={{ position: "relative", margin: "1rem 0", textAlign: "center" }}>
-            <ConfettiExplosion />
-            <span
-              style={{
-                fontWeight: 900,
-                fontSize: 32,
-                color: "#fff",
-                background: "#222",
-                padding: "0.5rem 1.5rem",
-                borderRadius: 12,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                display: "inline-block",
-                marginTop: 8,
-              }}
-            >
-              Winner: {results && results[0] ? results[0].horse : ""}!
-            </span>
-          </div>
-          <h3>Declared Winner Results</h3>
-          <ol style={{ paddingLeft: 20 }}>
-            {results.map((r, idx) => (
-              <li key={r.name + r.result + idx} style={{ wordBreak: "break-word" }}>
-                {r.name}, Result: {r.result}
-              </li>
-            ))}
-          </ol>
+          {!racing && raceWinner && (
+            <>
+              <div style={{ position: "relative", margin: "1rem 0", textAlign: "center" }}>
+                <ConfettiExplosion />
+                <span
+                  style={{
+                    fontWeight: 900,
+                    fontSize: 32,
+                    color: "#fff",
+                    background: "#222",
+                    padding: "0.5rem 1.5rem",
+                    borderRadius: 12,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    display: "inline-block",
+                    marginTop: 8,
+                  }}
+                >
+                  Winner: {raceWinner}!
+                </span>
+              </div>
+              <h3>Declared Winner Results</h3>
+              <ol style={{ paddingLeft: 20 }}>
+                {results &&
+                  results.map((r, idx) => (
+                    <li key={r.name + r.result + idx} style={{ wordBreak: "break-word" }}>
+                      {r.name}, Result: {r.result}
+                    </li>
+                  ))}
+              </ol>
+            </>
+          )}
         </>
       )}
     </div>

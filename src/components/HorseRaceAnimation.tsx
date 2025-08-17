@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 
 // Enhanced horse race animation component (copied from AdminPage)
-export function HorseRaceAnimation({ winner, finished }: { winner: 'Horse A' | 'Horse B' | null, finished?: boolean }) {
+export // Enhanced horse race animation component
+function HorseRaceAnimation({ winner, finished }: { winner: 'Horse A' | 'Horse B' | null, finished?: boolean }) {
   const [progressA, setProgressA] = useState(0);
   const [progressB, setProgressB] = useState(0);
 
   // Detect dark mode
-  const isDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   const horseTextColor = isDark ? '#fff' : '#111';
   const horseShadow = isDark ? '0 2px 8px #000' : '0 2px 8px #fff';
 
@@ -62,7 +63,7 @@ export function HorseRaceAnimation({ winner, finished }: { winner: 'Horse A' | '
           overflow: 'visible',
         }}
       >
-        <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>40e</span>
+        <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🐎</span>
         <span
           style={
             finished && winner === 'Horse A'
@@ -91,7 +92,7 @@ export function HorseRaceAnimation({ winner, finished }: { winner: 'Horse A' | '
           overflow: 'visible',
         }}
       >
-        <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>40e</span>
+        <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🐎</span>
         <span
           style={
             finished && winner === 'Horse B'
