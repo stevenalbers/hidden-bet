@@ -1,16 +1,40 @@
 import React, { useEffect, useState } from "react";
 
-// Enhanced horse race animation component (copied from AdminPage)
-export // Enhanced horse race animation component
-function HorseRaceAnimation({ winner, finished }: { winner: "Horse A" | "Horse B" | null; finished?: boolean }) {
+// Enhanced horse race animation component
+export function HorseRaceAnimation({ winner, finished, onRaceEnd }: {
+  winner: "Horse A" | "Horse B" | null;
+  finished?: boolean;
+  onRaceEnd?: () => void;
+}) {
   const [progressA, setProgressA] = useState(0);
   const [progressB, setProgressB] = useState(0);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [raceStarted, setRaceStarted] = useState(false);
 
-  // Always reset progress to 0 when a new race starts
+  // Always reset progress and countdown when a new race starts, but not when finished is true
   useEffect(() => {
+    if (finished) return;
     setProgressA(0);
     setProgressB(0);
-  }, [winner]);
+    if (winner) {
+      setCountdown(5);
+      setRaceStarted(false);
+    } else {
+      setCountdown(null);
+      setRaceStarted(false);
+    }
+  }, [winner, finished]);
+
+  // Countdown effect
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown === 0) {
+      setRaceStarted(true);
+      return;
+    }
+    const timer = setTimeout(() => setCountdown((c) => (c !== null ? c - 1 : null)), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   // Detect dark mode
   const isDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -18,6 +42,7 @@ function HorseRaceAnimation({ winner, finished }: { winner: "Horse A" | "Horse B
   const horseShadow = isDark ? "0 2px 8px #000" : "0 2px 8px #fff";
 
   useEffect(() => {
+    if (!raceStarted || finished) return;
     let start: number | null = null;
     let raf: number;
     // Generate random lead changes (crossings)
@@ -69,13 +94,14 @@ function HorseRaceAnimation({ winner, finished }: { winner: "Horse A" | "Horse B
       setProgressB(pctB);
       if (pctA < 1 || pctB < 1) {
         raf = requestAnimationFrame(animate);
+      } else {
+        // Animation finished
+        if (onRaceEnd) onRaceEnd();
       }
     }
-    if (winner) {
-      raf = requestAnimationFrame(animate);
-    }
+    raf = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(raf);
-  }, [winner]);
+  }, [raceStarted, winner, finished, onRaceEnd]);
 
   // Highlight the winning horse after the race
   const highlightStyle = {
@@ -93,6 +119,31 @@ function HorseRaceAnimation({ winner, finished }: { winner: "Horse A" | "Horse B
 
   return (
     <>
+      {/* Countdown overlay */}
+      {countdown !== null && countdown > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0,0,0,0.6)",
+            zIndex: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 64,
+            color: "#fff",
+            fontWeight: 900,
+            letterSpacing: 2,
+            userSelect: "none",
+            pointerEvents: "none",
+          }}
+        >
+          {countdown}
+        </div>
+      )}
       {/* Horse A Name (fixed left) */}
       <div
         style={{

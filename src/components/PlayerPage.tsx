@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+// Ref for the race animation container
 import { HorseRaceAnimation, ConfettiExplosion } from "./HorseRaceAnimation";
 import { Submission, useSubmissions } from "./SubmissionsContext";
-import { API_BASE_URL } from "../consts";
+import { API_BASE_URL, TOTAL_PLAYERS } from "../consts";
 
 export default function PlayerPage() {
   const [name, setName] = useState("");
   const [horse, setHorse] = useState<string>("");
   const [wager, setWager] = useState<number | "">("");
+  const raceRef = useRef<HTMLDivElement>(null);
   // Add bookieBet to mySubmission
   const [mySubmission, setMySubmission] = useState<(Submission & { bookieBet: number; totalWager: number }) | null>(
     null
@@ -20,21 +22,19 @@ export default function PlayerPage() {
 
   // Start race animation when results arrive (i.e., admin triggers race)
   useEffect(() => {
-    console.log("results", results);
-
     if (results && results[0] && (results[0].horse === "Horse A" || results[0].horse === "Horse B")) {
       setRacing(true);
       setRaceWinner(results[0].horse as "Horse A" | "Horse B");
-      // End race after 10s (match admin)
-      const timeout = setTimeout(() => {
-        setRacing(false);
-      }, 10000);
-      return () => clearTimeout(timeout);
+      // Scroll race into view when race starts
+      setTimeout(() => {
+        raceRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100); // slight delay to ensure render
     } else {
       setRacing(false);
       setRaceWinner(null);
     }
   }, [results]);
+  console.log("submissions:", allSubmissions);
 
   // Fetch my submission on mount
   useEffect(() => {
@@ -106,7 +106,7 @@ export default function PlayerPage() {
   const showRace =
     racing || (results && results[0] && (results[0].horse === "Horse A" || results[0].horse === "Horse B"));
 
-  const allSubmitted = allSubmissions && Object.keys(allSubmissions).length >= 2;
+  const allSubmitted = allSubmissions && Object.keys(allSubmissions).length >= TOTAL_PLAYERS;
   return (
     <div style={{ maxWidth: "100%", margin: "0 auto", padding: "1rem" }}>
       <form onSubmit={handleSubmit}>
@@ -205,10 +205,16 @@ export default function PlayerPage() {
             <li>Horse: {mySubmission.horse}</li>
             <li>My Wager: {mySubmission.wager}</li>
             <li>
-              Bookie's Wager: {typeof mySubmission.bookieBet === 'number' ? mySubmission.bookieBet : getBookieBet(mySubmission)}
+              Bookie's Wager:{" "}
+              {typeof mySubmission.bookieBet === "number" ? mySubmission.bookieBet : getBookieBet(mySubmission)}
             </li>
             <li>
-              Total Wager: <b>{typeof mySubmission.totalWager === 'number' ? mySubmission.totalWager : mySubmission.wager + getBookieBet(mySubmission)}</b>
+              Total Wager:{" "}
+              <b>
+                {typeof mySubmission.totalWager === "number"
+                  ? mySubmission.totalWager
+                  : mySubmission.wager + getBookieBet(mySubmission)}
+              </b>
             </li>
           </ul>
         </div>
@@ -233,7 +239,7 @@ export default function PlayerPage() {
             marginBottom: 16,
           }}
         >
-          Bets submitted: {allSubmissions ? Object.keys(allSubmissions).length : 0}/2
+          Bets submitted: {allSubmissions ? Object.keys(allSubmissions).length : 0}/{TOTAL_PLAYERS}
         </div>
       ) : (
         <div style={{ marginBottom: 16 }}>
@@ -279,7 +285,7 @@ export default function PlayerPage() {
               }
             }
           `}</style>
-          {accordionOpen && allSubmissions && Object.keys(allSubmissions).length >= 2 && (
+          {accordionOpen && allSubmissions && Object.keys(allSubmissions).length >= TOTAL_PLAYERS && (
             <div
               style={{
                 display: "flex",
@@ -350,6 +356,7 @@ export default function PlayerPage() {
         <>
           <hr />
           <div
+            ref={raceRef}
             style={{
               position: "relative",
               height: 160,
@@ -361,7 +368,11 @@ export default function PlayerPage() {
               boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
             }}
           >
-            <HorseRaceAnimation winner={raceWinner} finished={!racing && !!raceWinner} />
+            <HorseRaceAnimation
+              winner={raceWinner}
+              finished={!racing && !!raceWinner}
+              onRaceEnd={() => setRacing(false)}
+            />
             {/* Finish line */}
             <div
               style={{
@@ -405,9 +416,9 @@ export default function PlayerPage() {
                     // Calculate result using total wager
                     let result = 0;
                     if (r.horse === raceWinner) {
-                      result = 100 + total;
+                      result = 150 + total;
                     } else {
-                      result = 100 - total;
+                      result = 150 - total;
                     }
                     return (
                       <li key={r.name + r.result + idx} style={{ wordBreak: "break-word" }}>
