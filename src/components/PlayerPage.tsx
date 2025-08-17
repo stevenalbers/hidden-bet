@@ -84,7 +84,7 @@ export default function PlayerPage() {
 
   const allSubmitted = allSubmissions && Object.keys(allSubmissions).length >= 2;
   return (
-    <div style={{ width: "100vw", maxWidth: 500, margin: "0 auto", padding: "1rem" }}>
+    <div style={{ maxWidth: "100%", margin: "0 auto", padding: "1rem" }}>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 16 }}>
           <label htmlFor="name" style={{ display: "block", marginBottom: 4 }}>
@@ -97,7 +97,6 @@ export default function PlayerPage() {
             onChange={(e) => setName(e.target.value)}
             disabled={!!mySubmission}
             required
-            style={{ width: "100%" }}
           />
         </div>
         <div style={{ marginBottom: 16 }}>
@@ -150,7 +149,6 @@ export default function PlayerPage() {
             }}
             disabled={!!mySubmission}
             required
-            style={{ width: "100%" }}
           />
         </div>
         <button
@@ -159,7 +157,6 @@ export default function PlayerPage() {
             !!mySubmission || !name.trim() || !horse || wager === "" || Number(wager) < 0 || Number(wager) > 100
           }
           style={{
-            width: "100%",
             padding: 10,
             fontWeight: 700,
             fontSize: 18,
@@ -213,7 +210,6 @@ export default function PlayerPage() {
           <button
             onClick={() => setAccordionOpen((open) => !open)}
             style={{
-              width: "100%",
               textAlign: "left",
               fontWeight: 700,
               fontSize: 18,
