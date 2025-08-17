@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { HorseRaceAnimation, ConfettiExplosion } from "./HorseRaceAnimation";
 import { Submission, useSubmissions } from "./SubmissionsContext";
 import { API_BASE_URL } from "../consts";
 
@@ -30,10 +31,7 @@ export default function PlayerPage() {
     // and mySubmission is not present in allSubmissions
     if (mySubmission && allSubmissions !== null) {
       const stillExists = Object.values(allSubmissions).some(
-        (sub) =>
-          sub.name === mySubmission.name &&
-          sub.horse === mySubmission.horse &&
-          sub.wager === mySubmission.wager
+        (sub) => sub.name === mySubmission.name && sub.horse === mySubmission.horse && sub.wager === mySubmission.wager
       );
       if (!stillExists) {
         setMySubmission(null);
@@ -55,11 +53,25 @@ export default function PlayerPage() {
     setHorse("");
     setWager("");
   };
+  // Accordion state for All Submissions
+  const [accordionOpen, setAccordionOpen] = useState(false);
+  // Open accordion automatically when all submissions are in
+  useEffect(() => {
+    if (allSubmissions && Object.keys(allSubmissions).length >= 2) {
+      setAccordionOpen(false); // Start collapsed when all forms are submitted
+    }
+  }, [allSubmissions]);
+
+  // Show race animation if results are present
+  const showRace = !!results;
+
   return (
-    <div style={{ maxWidth: 380, margin: '0 auto', padding: '1rem' }}>
+    <div style={{ maxWidth: 380, margin: "0 auto", padding: "1rem" }}>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 16 }}>
-          <label htmlFor="name" style={{ display: 'block', marginBottom: 4 }}>Your name:</label>
+          <label htmlFor="name" style={{ display: "block", marginBottom: 4 }}>
+            Your name:
+          </label>
           <input
             id="name"
             type="text"
@@ -67,12 +79,12 @@ export default function PlayerPage() {
             onChange={(e) => setName(e.target.value)}
             disabled={!!mySubmission}
             required
-            style={{ width: '100%' }}
+            style={{ width: "100%" }}
           />
         </div>
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', marginBottom: 4 }}>Your horse:</label>
-          <div style={{ display: 'flex', gap: 12 }}>
+          <label style={{ display: "block", marginBottom: 4 }}>Your horse:</label>
+          <div style={{ display: "flex", gap: 12 }}>
             <label>
               <input
                 type="radio"
@@ -100,7 +112,9 @@ export default function PlayerPage() {
           </div>
         </div>
         <div style={{ marginBottom: 16 }}>
-          <label htmlFor="wager" style={{ display: 'block', marginBottom: 4 }}>Your wager (0-100):</label>
+          <label htmlFor="wager" style={{ display: "block", marginBottom: 4 }}>
+            Your wager (0-100):
+          </label>
           <input
             id="wager"
             type="number"
@@ -118,7 +132,7 @@ export default function PlayerPage() {
             }}
             disabled={!!mySubmission}
             required
-            style={{ width: '100%' }}
+            style={{ width: "100%" }}
           />
         </div>
         <button
@@ -126,7 +140,20 @@ export default function PlayerPage() {
           disabled={
             !!mySubmission || !name.trim() || !horse || wager === "" || Number(wager) < 0 || Number(wager) > 100
           }
-          style={{ width: '100%', padding: 8 }}
+          style={{
+            width: "100%",
+            padding: 10,
+            fontWeight: 700,
+            fontSize: 18,
+            borderRadius: 8,
+            border: "none",
+            background: "var(--submit-bg, #222)",
+            color: "var(--submit-fg, #fff)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
+            cursor: "pointer",
+            marginTop: 8,
+            transition: "background 0.2s, color 0.2s",
+          }}
         >
           Submit
         </button>
@@ -141,51 +168,171 @@ export default function PlayerPage() {
           </ul>
         </div>
       )}
+
       <hr />
-      <h3>All Submissions</h3>
-      {allSubmissions && Object.keys(allSubmissions).length >= 2 ? (
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', flexWrap: 'wrap' }}>
-          {/* Horse A Column */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h4>Horse A</h4>
-            <ul style={{ paddingLeft: 16 }}>
-              {Object.values(allSubmissions)
-                .filter((sub) => sub.horse === 'Horse A')
-                .sort((a, b) => b.wager - a.wager)
-                .map((submission, idx) => (
-                  <li key={submission.name + submission.wager + idx} style={{ wordBreak: 'break-word' }}>
-                    {submission.name}, Wager: {submission.wager}
-                  </li>
-                ))}
-            </ul>
-          </div>
-          {/* Horse B Column */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h4>Horse B</h4>
-            <ul style={{ paddingLeft: 16 }}>
-              {Object.values(allSubmissions)
-                .filter((sub) => sub.horse === 'Horse B')
-                .sort((a, b) => b.wager - a.wager)
-                .map((submission, idx) => (
-                  <li key={submission.name + submission.wager + idx} style={{ wordBreak: 'break-word' }}>
-                    {submission.name}, Wager: {submission.wager}
-                  </li>
-                ))}
-            </ul>
-          </div>
-        </div>
+      {/* Show waiting message if not all submitted */}
+      {!allSubmissions || Object.keys(allSubmissions).length < 2 ? (
+        <div>Waiting for all submissions...</div>
       ) : (
-        <p>Waiting for all submissions...</p>
+        <div style={{ marginBottom: 16 }}>
+          <button
+            onClick={() => setAccordionOpen((open) => !open)}
+            style={{
+              width: "100%",
+              textAlign: "left",
+              fontWeight: 700,
+              fontSize: 18,
+              background: "var(--accordion-bg, #eee)",
+              color: "var(--accordion-fg, #222)",
+              border: "1px solid var(--accordion-border, #ccc)",
+              borderRadius: 8,
+              padding: "0.75rem 1rem",
+              cursor: "pointer",
+              marginBottom: 0,
+              outline: "none",
+              transition: "background 0.2s, color 0.2s",
+            }}
+            disabled={!allSubmissions || Object.keys(allSubmissions).length < 2}
+            aria-expanded={accordionOpen}
+          >
+            The bets are in
+            <span style={{ float: "right", fontWeight: 400 }}>{accordionOpen ? "▲" : "▼"}</span>
+          </button>
+          {/* Contrast theme styles for accordion and submit button */}
+          <style>{`
+          @media (prefers-color-scheme: dark) {
+            :root {
+              --accordion-bg: #222;
+              --accordion-fg: #fff;
+              --accordion-border: #444;
+              --submit-bg: #fff;
+              --submit-fg: #222;
+            }
+          }
+          @media (prefers-color-scheme: light) {
+            :root {
+              --accordion-bg: #fff;
+              --accordion-fg: #222;
+              --accordion-border: #ccc;
+              --submit-bg: #222;
+              --submit-fg: #fff;
+            }
+          }
+        `}</style>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              gap: "1rem",
+              flexWrap: "wrap",
+              border: "1px solid var(--accordion-border, #ccc)",
+              borderTop: "none",
+              borderRadius: "0 0 8px 8px",
+              padding: "1rem",
+              background: "var(--accordion-bg, #fafafa)",
+              color: "var(--accordion-fg, #222)",
+              transition: "background 0.2s, color 0.2s",
+            }}
+          >
+            {/* Horse A Column */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h4 style={{ color: "inherit" }}>Horse A</h4>
+              <ul style={{ paddingLeft: 16 }}>
+                {Object.values(allSubmissions)
+                  .filter((sub) => sub.horse === "Horse A")
+                  .sort((a, b) => b.wager - a.wager)
+                  .map((submission, idx) => (
+                    <li
+                      key={submission.name + submission.wager + idx}
+                      style={{ wordBreak: "break-word", color: "inherit" }}
+                    >
+                      {submission.name}, Wager: {submission.wager}
+                    </li>
+                  ))}
+              </ul>
+            </div>
+            {/* Horse B Column */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h4 style={{ color: "inherit" }}>Horse B</h4>
+              <ul style={{ paddingLeft: 16 }}>
+                {Object.values(allSubmissions)
+                  .filter((sub) => sub.horse === "Horse B")
+                  .sort((a, b) => b.wager - a.wager)
+                  .map((submission, idx) => (
+                    <li
+                      key={submission.name + submission.wager + idx}
+                      style={{ wordBreak: "break-word", color: "inherit" }}
+                    >
+                      {submission.name}, Wager: {submission.wager}
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          </div>
+          {/* Show waiting message if not all submitted */}
+        </div>
       )}
 
-      {/* Declared Winner Results Section */}
-      {results && (
+      {/* Race Animation and Results Section */}
+      {showRace && (
         <>
           <hr />
+          <div
+            style={{
+              position: "relative",
+              height: 160,
+              margin: "2rem 0",
+              background: "var(--race-bg, #fff)",
+              borderRadius: 8,
+              overflow: "hidden",
+              border: "2px solid #222",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            }}
+          >
+            <HorseRaceAnimation
+              winner={
+                results && results[0] && (results[0].horse === "Horse A" || results[0].horse === "Horse B")
+                  ? (results[0].horse as "Horse A" | "Horse B")
+                  : null
+              }
+              finished={true}
+            />
+            {/* Finish line */}
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                width: 8,
+                height: "100%",
+                background: "repeating-linear-gradient(180deg, #fff 0 8px, #222 8px 16px)",
+                zIndex: 2,
+              }}
+            />
+          </div>
+          {/* Show winner below animation after race */}
+          <div style={{ position: "relative", margin: "1rem 0", textAlign: "center" }}>
+            <ConfettiExplosion />
+            <span
+              style={{
+                fontWeight: 900,
+                fontSize: 32,
+                color: "#fff",
+                background: "#222",
+                padding: "0.5rem 1.5rem",
+                borderRadius: 12,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                display: "inline-block",
+                marginTop: 8,
+              }}
+            >
+              Winner: {results && results[0] ? results[0].horse : ""}!
+            </span>
+          </div>
           <h3>Declared Winner Results</h3>
           <ol style={{ paddingLeft: 20 }}>
             {results.map((r, idx) => (
-              <li key={r.name + r.result + idx} style={{ wordBreak: 'break-word' }}>
+              <li key={r.name + r.result + idx} style={{ wordBreak: "break-word" }}>
                 {r.name}, Result: {r.result}
               </li>
             ))}
