@@ -96,10 +96,8 @@ export default function PlayerPage() {
       credentials: "include",
       body: JSON.stringify(payload),
     });
-    setMySubmission({ ...payload, bookieBet: bookie, totalWager: wagerVal + bookie });
-    setName("");
-    setHorse("");
-    setWager("");
+    // Force a page refresh after submit
+    window.location.reload();
   };
   // Accordion state for All Submissions
   const [accordionOpen, setAccordionOpen] = useState(false);
