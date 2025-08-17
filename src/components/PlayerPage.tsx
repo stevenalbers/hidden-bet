@@ -84,7 +84,7 @@ export default function PlayerPage() {
 
   const allSubmitted = allSubmissions && Object.keys(allSubmissions).length >= 2;
   return (
-    <div style={{ maxWidth: 380, margin: "0 auto", padding: "1rem" }}>
+    <div style={{ width: "100vw", maxWidth: 500, margin: "0 auto", padding: "1rem" }}>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 16 }}>
           <label htmlFor="name" style={{ display: "block", marginBottom: 4 }}>
