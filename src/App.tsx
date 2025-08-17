@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import PlayerPage from "./components/PlayerPage";
 import AdminPage from "./components/AdminPage";
 // import { useEffect, useRef, useState } from "react";
@@ -63,9 +63,9 @@ function RoutedApp() {
   const { allSubmissions, handleClear } = useSubmissions();
   return (
     <BrowserRouter>
-      <nav style={{ marginBottom: 20 }}>
-        <Link to="/player">Player</Link> | <Link to="/admin">Admin</Link>
-      </nav>
+      {/* <nav style={{ marginBottom: 20 }}> */}
+      {/* <Link to="/player">Player</Link> | <Link to="/admin">Admin</Link> */}
+      {/* </nav> */}
       <Routes>
         <Route path="/player" element={<PlayerPage />} />
         <Route path="/admin" element={<AdminPage allSubmissions={allSubmissions} onClear={handleClear} />} />
