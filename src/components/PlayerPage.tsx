@@ -1,21 +1,16 @@
-
-
 import React, { useEffect, useState } from "react";
 import { Submission, useSubmissions } from "./SubmissionsContext";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
-  (window.location.hostname === "localhost"
-    ? "http://localhost:3001"
-    : `https://${window.location.hostname}`);
-
+  (window.location.hostname === "localhost" ? "http://localhost:3001" : `https://${window.location.hostname}`);
 
 export default function PlayerPage() {
   const [name, setName] = useState("");
   const [horse, setHorse] = useState<string>("");
   const [wager, setWager] = useState<number | "">("");
   const [mySubmission, setMySubmission] = useState<Submission | null>(null);
-  const { allSubmissions } = useSubmissions();
+  const { allSubmissions, results } = useSubmissions();
   console.log("allSubmissions in PlayerPage:", allSubmissions);
 
   // Fetch my submission on mount
@@ -35,14 +30,14 @@ export default function PlayerPage() {
 
   // If my submission is cleared from allSubmissions, allow resubmission
   useEffect(() => {
-    // Find if mySubmission is still present in allSubmissions
-    if (mySubmission && allSubmissions) {
-      const stillExists = Object.values(allSubmissions).some(
-        (sub) =>
-          sub.name === mySubmission.name &&
-          sub.horse === mySubmission.horse &&
-          sub.wager === mySubmission.wager
-      );
+    // If mySubmission exists, but is not present in allSubmissions (including when allSubmissions is empty/null), reset it
+    if (mySubmission) {
+      const stillExists =
+        allSubmissions &&
+        Object.values(allSubmissions).some(
+          (sub) =>
+            sub.name === mySubmission.name && sub.horse === mySubmission.horse && sub.wager === mySubmission.wager
+        );
       if (!stillExists) {
         setMySubmission(null);
       }
@@ -121,7 +116,9 @@ export default function PlayerPage() {
         </div>
         <button
           type="submit"
-          disabled={!!mySubmission || !name.trim() || !horse || wager === "" || Number(wager) < 0 || Number(wager) > 100}
+          disabled={
+            !!mySubmission || !name.trim() || !horse || wager === "" || Number(wager) < 0 || Number(wager) > 100
+          }
         >
           Submit
         </button>
@@ -139,15 +136,53 @@ export default function PlayerPage() {
       <hr />
       <h3>All Submissions</h3>
       {allSubmissions ? (
-        <ul>
-          {Object.entries(allSubmissions).map(([id, submission]) => (
-            <li key={id}>
-              Name: {submission.name}, Horse: {submission.horse}, Wager: {submission.wager}
-            </li>
-          ))}
-        </ul>
+        <div style={{ display: "flex", gap: "2rem" }}>
+          {/* Horse A Column */}
+          <div>
+            <h4>Horse A</h4>
+            <ul>
+              {Object.values(allSubmissions)
+                .filter((sub) => sub.horse === "Horse A")
+                .sort((a, b) => b.wager - a.wager)
+                .map((submission, idx) => (
+                  <li key={submission.name + submission.wager + idx}>
+                    Name: {submission.name}, Wager: {submission.wager}
+                  </li>
+                ))}
+            </ul>
+          </div>
+          {/* Horse B Column */}
+          <div>
+            <h4>Horse B</h4>
+            <ul>
+              {Object.values(allSubmissions)
+                .filter((sub) => sub.horse === "Horse B")
+                .sort((a, b) => b.wager - a.wager)
+                .map((submission, idx) => (
+                  <li key={submission.name + submission.wager + idx}>
+                    Name: {submission.name}, Wager: {submission.wager}
+                  </li>
+                ))}
+            </ul>
+          </div>
+        </div>
       ) : (
         <p>Waiting for all submissions...</p>
+      )}
+
+      {/* Declared Winner Results Section */}
+      {results && (
+        <>
+          <hr />
+          <h3>Declared Winner Results</h3>
+          <ul>
+            {results.map((r, idx) => (
+              <li key={r.name + r.result + idx}>
+                Name: {r.name}, Horse: {r.horse}, Wager: {r.wager}, Result: {r.result}
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   );

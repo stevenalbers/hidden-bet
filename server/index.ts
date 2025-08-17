@@ -81,6 +81,39 @@ app.post("/clear-submission", (req, res) => {
   broadcastSubmissions();
 });
 
+// Calculate and broadcast results when a winner is declared
+// This must be after app and submissions are declared
+app.post("/declare-winner", (req, res) => {
+  const { winner } = req.body;
+  if (winner !== "Horse A" && winner !== "Horse B") {
+    return res.status(400).json({ success: false, error: "Invalid winner" });
+  }
+  // Calculate results
+  const results = Object.values(submissions).map((sub) => {
+    if (!sub || typeof sub !== 'object') return null;
+    const { name, horse, wager } = sub as { name: string; horse: string; wager: number };
+    let result = 0;
+    if (horse === winner) {
+      result = 100 + wager;
+    } else {
+      result = 100 - wager;
+    }
+    return { name, horse, wager, result };
+  }).filter(Boolean);
+  // Broadcast results to all clients
+  wss.clients.forEach((client: SessionWebSocket) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(
+        JSON.stringify({
+          type: "results",
+          results,
+        })
+      );
+    }
+  });
+  res.json({ success: true });
+});
+
 // --- WebSocket setup ---
 
 const server = createServer(app);
