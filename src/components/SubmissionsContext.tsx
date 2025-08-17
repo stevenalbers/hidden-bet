@@ -12,12 +12,12 @@ type SubmissionsContextType = {
 const SubmissionsContext = createContext<SubmissionsContextType | undefined>(undefined);
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (window.location.hostname === "localhost" ? "http://localhost:3001" : "https://hidden-bet-api.onrender.com");
+  //   import.meta.env.VITE_API_URL ||
+  window.location.hostname === "localhost" ? "http://localhost:3001" : "https://hidden-bet-api.onrender.com";
 
 const WS_URL =
-  import.meta.env.VITE_WS_URL ||
-  (window.location.hostname === "localhost" ? "ws://localhost:3001" : `wss://hidden-bet-api.onrender.com`);
+  //   import.meta.env.VITE_WS_URL ||
+  window.location.hostname === "localhost" ? "ws://localhost:3001" : `wss://hidden-bet-api.onrender.com`;
 
 export function SubmissionsProvider({ children }: { children: React.ReactNode }) {
   const [allSubmissions, setAllSubmissions] = useState<{ [key: string]: Submission } | null>(null);
