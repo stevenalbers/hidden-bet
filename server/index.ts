@@ -52,6 +52,7 @@ app.post("/submit", (req, res) => {
 });
 
 // Clear all submissions
+
 app.post("/clear-submissions", (_req, res) => {
   for (const key in submissions) {
     delete submissions[key];
@@ -67,6 +68,17 @@ app.post("/clear-submissions", (_req, res) => {
       client.send(JSON.stringify({ type: "clear" }));
     }
   });
+});
+
+// Clear a single submission by sessionId
+app.post("/clear-submission", (req, res) => {
+  const { sessionId } = req.body;
+  if (!sessionId || !(sessionId in submissions)) {
+    return res.status(400).json({ success: false, error: "Invalid sessionId" });
+  }
+  delete submissions[sessionId];
+  res.json({ success: true });
+  broadcastSubmissions();
 });
 
 // --- WebSocket setup ---

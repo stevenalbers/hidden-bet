@@ -18,6 +18,7 @@ export default function PlayerPage() {
   const { allSubmissions } = useSubmissions();
   console.log("allSubmissions in PlayerPage:", allSubmissions);
 
+  // Fetch my submission on mount
   useEffect(() => {
     fetch(`${API_BASE_URL}/my-submission`, {
       credentials: "include",
@@ -31,6 +32,22 @@ export default function PlayerPage() {
         }
       });
   }, []);
+
+  // If my submission is cleared from allSubmissions, allow resubmission
+  useEffect(() => {
+    // Find if mySubmission is still present in allSubmissions
+    if (mySubmission && allSubmissions) {
+      const stillExists = Object.values(allSubmissions).some(
+        (sub) =>
+          sub.name === mySubmission.name &&
+          sub.horse === mySubmission.horse &&
+          sub.wager === mySubmission.wager
+      );
+      if (!stillExists) {
+        setMySubmission(null);
+      }
+    }
+  }, [allSubmissions, mySubmission]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
