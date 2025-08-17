@@ -55,16 +55,11 @@ export default function PlayerPage() {
   };
   // Accordion state for All Submissions
   const [accordionOpen, setAccordionOpen] = useState(false);
-  // Open accordion automatically when all submissions are in
-  useEffect(() => {
-    if (allSubmissions && Object.keys(allSubmissions).length >= 2) {
-      setAccordionOpen(false); // Start collapsed when all forms are submitted
-    }
-  }, [allSubmissions]);
 
   // Show race animation if results are present
   const showRace = !!results;
 
+  const allSubmitted = allSubmissions && Object.keys(allSubmissions).length >= 2;
   return (
     <div style={{ maxWidth: 380, margin: "0 auto", padding: "1rem" }}>
       <form onSubmit={handleSubmit}>
@@ -170,106 +165,117 @@ export default function PlayerPage() {
       )}
 
       <hr />
-      {/* Show waiting message if not all submitted */}
-      {!allSubmissions || Object.keys(allSubmissions).length < 2 ? (
-        <div>Waiting for all submissions...</div>
+      {/* Show only one section depending on submission state */}
+      {!allSubmitted ? (
+        <div style={{
+          padding: '1rem',
+          color: 'var(--accordion-fg, #fff)',
+          background: 'var(--accordion-bg, #222)',
+          border: '1px solid var(--accordion-border, #444)',
+          borderTop: 'none',
+          borderRadius: '0 0 8px 8px',
+          fontWeight: 700,
+          fontSize: 18,
+          letterSpacing: 0.5,
+          textAlign: 'center',
+          transition: 'background 0.2s, color 0.2s',
+          marginBottom: 16,
+        }}>
+          Bets submitted: {allSubmissions ? Object.keys(allSubmissions).length : 0}/2
+        </div>
       ) : (
         <div style={{ marginBottom: 16 }}>
           <button
             onClick={() => setAccordionOpen((open) => !open)}
             style={{
-              width: "100%",
-              textAlign: "left",
+              width: '100%',
+              textAlign: 'left',
               fontWeight: 700,
               fontSize: 18,
-              background: "var(--accordion-bg, #eee)",
-              color: "var(--accordion-fg, #222)",
-              border: "1px solid var(--accordion-border, #ccc)",
+              background: 'var(--accordion-bg, #eee)',
+              color: 'var(--accordion-fg, #222)',
+              border: '1px solid var(--accordion-border, #ccc)',
               borderRadius: 8,
-              padding: "0.75rem 1rem",
-              cursor: "pointer",
+              padding: '0.75rem 1rem',
+              cursor: 'pointer',
               marginBottom: 0,
-              outline: "none",
-              transition: "background 0.2s, color 0.2s",
+              outline: 'none',
+              transition: 'background 0.2s, color 0.2s',
             }}
-            disabled={!allSubmissions || Object.keys(allSubmissions).length < 2}
             aria-expanded={accordionOpen}
           >
             The bets are in
-            <span style={{ float: "right", fontWeight: 400 }}>{accordionOpen ? "▲" : "▼"}</span>
+            <span style={{ float: 'right', fontWeight: 400 }}>
+              {accordionOpen ? '▲' : '▼'}
+            </span>
           </button>
           {/* Contrast theme styles for accordion and submit button */}
           <style>{`
-          @media (prefers-color-scheme: dark) {
-            :root {
-              --accordion-bg: #222;
-              --accordion-fg: #fff;
-              --accordion-border: #444;
-              --submit-bg: #fff;
-              --submit-fg: #222;
+            @media (prefers-color-scheme: dark) {
+              :root {
+                --accordion-bg: #222;
+                --accordion-fg: #fff;
+                --accordion-border: #444;
+                --submit-bg: #fff;
+                --submit-fg: #222;
+              }
             }
-          }
-          @media (prefers-color-scheme: light) {
-            :root {
-              --accordion-bg: #fff;
-              --accordion-fg: #222;
-              --accordion-border: #ccc;
-              --submit-bg: #222;
-              --submit-fg: #fff;
+            @media (prefers-color-scheme: light) {
+              :root {
+                --accordion-bg: #fff;
+                --accordion-fg: #222;
+                --accordion-border: #ccc;
+                --submit-bg: #222;
+                --submit-fg: #fff;
+              }
             }
-          }
-        `}</style>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              gap: "1rem",
-              flexWrap: "wrap",
-              border: "1px solid var(--accordion-border, #ccc)",
-              borderTop: "none",
-              borderRadius: "0 0 8px 8px",
-              padding: "1rem",
-              background: "var(--accordion-bg, #fafafa)",
-              color: "var(--accordion-fg, #222)",
-              transition: "background 0.2s, color 0.2s",
-            }}
-          >
-            {/* Horse A Column */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h4 style={{ color: "inherit" }}>Horse A</h4>
-              <ul style={{ paddingLeft: 16 }}>
-                {Object.values(allSubmissions)
-                  .filter((sub) => sub.horse === "Horse A")
-                  .sort((a, b) => b.wager - a.wager)
-                  .map((submission, idx) => (
-                    <li
-                      key={submission.name + submission.wager + idx}
-                      style={{ wordBreak: "break-word", color: "inherit" }}
-                    >
-                      {submission.name}, Wager: {submission.wager}
-                    </li>
-                  ))}
-              </ul>
+          `}</style>
+          {accordionOpen && allSubmissions && Object.keys(allSubmissions).length >= 2 && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                gap: '1rem',
+                flexWrap: 'wrap',
+                border: '1px solid var(--accordion-border, #ccc)',
+                borderTop: 'none',
+                borderRadius: '0 0 8px 8px',
+                padding: '1rem',
+                background: 'var(--accordion-bg, #fafafa)',
+                color: 'var(--accordion-fg, #222)',
+                transition: 'background 0.2s, color 0.2s',
+              }}
+            >
+              {/* Horse A Column */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h4 style={{ color: 'inherit' }}>Horse A</h4>
+                <ul style={{ paddingLeft: 16 }}>
+                  {Object.values(allSubmissions)
+                    .filter((sub) => sub.horse === 'Horse A')
+                    .sort((a, b) => b.wager - a.wager)
+                    .map((submission, idx) => (
+                      <li key={submission.name + submission.wager + idx} style={{ wordBreak: 'break-word', color: 'inherit' }}>
+                        {submission.name}, Wager: {submission.wager}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+              {/* Horse B Column */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h4 style={{ color: 'inherit' }}>Horse B</h4>
+                <ul style={{ paddingLeft: 16 }}>
+                  {Object.values(allSubmissions)
+                    .filter((sub) => sub.horse === 'Horse B')
+                    .sort((a, b) => b.wager - a.wager)
+                    .map((submission, idx) => (
+                      <li key={submission.name + submission.wager + idx} style={{ wordBreak: 'break-word', color: 'inherit' }}>
+                        {submission.name}, Wager: {submission.wager}
+                      </li>
+                    ))}
+                </ul>
+              </div>
             </div>
-            {/* Horse B Column */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h4 style={{ color: "inherit" }}>Horse B</h4>
-              <ul style={{ paddingLeft: 16 }}>
-                {Object.values(allSubmissions)
-                  .filter((sub) => sub.horse === "Horse B")
-                  .sort((a, b) => b.wager - a.wager)
-                  .map((submission, idx) => (
-                    <li
-                      key={submission.name + submission.wager + idx}
-                      style={{ wordBreak: "break-word", color: "inherit" }}
-                    >
-                      {submission.name}, Wager: {submission.wager}
-                    </li>
-                  ))}
-              </ul>
-            </div>
-          </div>
-          {/* Show waiting message if not all submitted */}
+          )}
         </div>
       )}
 
