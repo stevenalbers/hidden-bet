@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+// Ref for the race animation container
 import { HorseRaceAnimation, ConfettiExplosion } from "./HorseRaceAnimation";
 import { Submission, useSubmissions } from "./SubmissionsContext";
 import { API_BASE_URL } from "../consts";
@@ -7,6 +8,7 @@ export default function PlayerPage() {
   const [name, setName] = useState("");
   const [horse, setHorse] = useState<string>("");
   const [wager, setWager] = useState<number | "">("");
+  const raceRef = useRef<HTMLDivElement>(null);
   // Add bookieBet to mySubmission
   const [mySubmission, setMySubmission] = useState<(Submission & { bookieBet: number; totalWager: number }) | null>(
     null
@@ -23,6 +25,10 @@ export default function PlayerPage() {
     if (results && results[0] && (results[0].horse === "Horse A" || results[0].horse === "Horse B")) {
       setRacing(true);
       setRaceWinner(results[0].horse as "Horse A" | "Horse B");
+      // Scroll race into view when race starts
+      setTimeout(() => {
+        raceRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100); // slight delay to ensure render
     } else {
       setRacing(false);
       setRaceWinner(null);
@@ -198,10 +204,16 @@ export default function PlayerPage() {
             <li>Horse: {mySubmission.horse}</li>
             <li>My Wager: {mySubmission.wager}</li>
             <li>
-              Bookie's Wager: {typeof mySubmission.bookieBet === 'number' ? mySubmission.bookieBet : getBookieBet(mySubmission)}
+              Bookie's Wager:{" "}
+              {typeof mySubmission.bookieBet === "number" ? mySubmission.bookieBet : getBookieBet(mySubmission)}
             </li>
             <li>
-              Total Wager: <b>{typeof mySubmission.totalWager === 'number' ? mySubmission.totalWager : mySubmission.wager + getBookieBet(mySubmission)}</b>
+              Total Wager:{" "}
+              <b>
+                {typeof mySubmission.totalWager === "number"
+                  ? mySubmission.totalWager
+                  : mySubmission.wager + getBookieBet(mySubmission)}
+              </b>
             </li>
           </ul>
         </div>
@@ -343,6 +355,7 @@ export default function PlayerPage() {
         <>
           <hr />
           <div
+            ref={raceRef}
             style={{
               position: "relative",
               height: 160,

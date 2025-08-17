@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 
-// Enhanced horse race animation component (copied from AdminPage)
 // Enhanced horse race animation component
 export function HorseRaceAnimation({ winner, finished, onRaceEnd }: {
   winner: "Horse A" | "Horse B" | null;
