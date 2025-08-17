@@ -5,6 +5,8 @@ export type Submission = { name: string; horse: string; wager: number };
 type SubmissionsContextType = {
   allSubmissions: { [key: string]: Submission } | null;
   handleClear: () => void;
+  wsRef: React.MutableRefObject<WebSocket | null>;
+  results: { name: string; horse: string; wager: number; result: number }[] | null;
 };
 
 const SubmissionsContext = createContext<SubmissionsContextType | undefined>(undefined);
@@ -19,12 +21,15 @@ const WS_URL =
 
 export function SubmissionsProvider({ children }: { children: React.ReactNode }) {
   const [allSubmissions, setAllSubmissions] = useState<{ [key: string]: Submission } | null>(null);
+  const [results, setResults] = useState<
+    { name: string; horse: string; wager: number; result: number }[] | null
+  >(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
-    ws.onmessage = (event) => {
+    const handleMessage = (event: MessageEvent) => {
       let msg;
       try {
         msg = JSON.parse(event.data);
@@ -41,8 +46,13 @@ export function SubmissionsProvider({ children }: { children: React.ReactNode })
       if (msg.type === "clear") {
         setAllSubmissions(null);
       }
+      if (msg.type === "results") {
+        setResults(Array.isArray(msg.results) ? [...msg.results].sort((a, b) => b.result - a.result) : null);
+      }
     };
+    ws.addEventListener("message", handleMessage);
     return () => {
+      ws.removeEventListener("message", handleMessage);
       ws.close();
     };
   }, []);
@@ -54,7 +64,7 @@ export function SubmissionsProvider({ children }: { children: React.ReactNode })
     });
   };
 
-  return <SubmissionsContext.Provider value={{ allSubmissions, handleClear }}>{children}</SubmissionsContext.Provider>;
+  return <SubmissionsContext.Provider value={{ allSubmissions, handleClear, wsRef, results }}>{children}</SubmissionsContext.Provider>;
 }
 
 export function useSubmissions() {
