@@ -8,7 +8,6 @@ export default function PlayerPage() {
   const [wager, setWager] = useState<number | "">("");
   const [mySubmission, setMySubmission] = useState<Submission | null>(null);
   const { allSubmissions, results } = useSubmissions();
-  console.log("allSubmissions in PlayerPage:", allSubmissions);
 
   // Fetch my submission on mount
   useEffect(() => {
