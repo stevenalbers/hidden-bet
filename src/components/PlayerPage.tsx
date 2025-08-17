@@ -56,66 +56,77 @@ export default function PlayerPage() {
     setWager("");
   };
   return (
-    <div>
+    <div style={{ maxWidth: 380, margin: '0 auto', padding: '1rem' }}>
       <form onSubmit={handleSubmit}>
-        <div>
-          <label>
-            Your name:
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={!!mySubmission}
-              required
-            />
-          </label>
+        <div style={{ marginBottom: 16 }}>
+          <label htmlFor="name" style={{ display: 'block', marginBottom: 4 }}>Your name:</label>
+          <input
+            id="name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={!!mySubmission}
+            required
+            style={{ width: '100%' }}
+          />
         </div>
-        <div>
-          <label>Your horse:</label>
-          <label>
-            <input
-              type="radio"
-              name="horse"
-              value="Horse A"
-              checked={horse === "Horse A"}
-              onChange={() => setHorse("Horse A")}
-              disabled={!!mySubmission}
-              required
-            />
-            Horse A
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="horse"
-              value="Horse B"
-              checked={horse === "Horse B"}
-              onChange={() => setHorse("Horse B")}
-              disabled={!!mySubmission}
-              required
-            />
-            Horse B
-          </label>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', marginBottom: 4 }}>Your horse:</label>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <label>
+              <input
+                type="radio"
+                name="horse"
+                value="Horse A"
+                checked={horse === "Horse A"}
+                onChange={() => setHorse("Horse A")}
+                disabled={!!mySubmission}
+                required
+              />
+              Horse A
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="horse"
+                value="Horse B"
+                checked={horse === "Horse B"}
+                onChange={() => setHorse("Horse B")}
+                disabled={!!mySubmission}
+                required
+              />
+              Horse B
+            </label>
+          </div>
         </div>
-        <div>
-          <label>
-            Your wager (0-100):
-            <input
-              type="number"
-              min={0}
-              max={100}
-              value={wager}
-              onChange={(e) => setWager(e.target.value === "" ? "" : Number(e.target.value))}
-              disabled={!!mySubmission}
-              required
-            />
-          </label>
+        <div style={{ marginBottom: 16 }}>
+          <label htmlFor="wager" style={{ display: 'block', marginBottom: 4 }}>Your wager (0-100):</label>
+          <input
+            id="wager"
+            type="number"
+            min={0}
+            max={100}
+            step={1}
+            pattern="[0-9]*"
+            inputMode="numeric"
+            value={wager}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (/^\d*$/.test(val) && (val === "" || (Number(val) >= 0 && Number(val) <= 100))) {
+                setWager(val === "" ? "" : Number(val));
+              }
+            }}
+            disabled={!!mySubmission}
+            required
+            style={{ width: '100%' }}
+          />
         </div>
         <button
           type="submit"
           disabled={
             !!mySubmission || !name.trim() || !horse || wager === "" || Number(wager) < 0 || Number(wager) > 100
           }
+          style={{ width: '100%', padding: 8 }}
         >
           Submit
         </button>
@@ -133,31 +144,31 @@ export default function PlayerPage() {
       <hr />
       <h3>All Submissions</h3>
       {allSubmissions ? (
-        <div style={{ display: "flex", gap: "2rem" }}>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', flexWrap: 'wrap' }}>
           {/* Horse A Column */}
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <h4>Horse A</h4>
-            <ul>
+            <ul style={{ paddingLeft: 16 }}>
               {Object.values(allSubmissions)
-                .filter((sub) => sub.horse === "Horse A")
+                .filter((sub) => sub.horse === 'Horse A')
                 .sort((a, b) => b.wager - a.wager)
                 .map((submission, idx) => (
-                  <li key={submission.name + submission.wager + idx}>
-                    Name: {submission.name}, Wager: {submission.wager}
+                  <li key={submission.name + submission.wager + idx} style={{ wordBreak: 'break-word' }}>
+                    {submission.name}, Wager: {submission.wager}
                   </li>
                 ))}
             </ul>
           </div>
           {/* Horse B Column */}
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <h4>Horse B</h4>
-            <ul>
+            <ul style={{ paddingLeft: 16 }}>
               {Object.values(allSubmissions)
-                .filter((sub) => sub.horse === "Horse B")
+                .filter((sub) => sub.horse === 'Horse B')
                 .sort((a, b) => b.wager - a.wager)
                 .map((submission, idx) => (
-                  <li key={submission.name + submission.wager + idx}>
-                    Name: {submission.name}, Wager: {submission.wager}
+                  <li key={submission.name + submission.wager + idx} style={{ wordBreak: 'break-word' }}>
+                    {submission.name}, Wager: {submission.wager}
                   </li>
                 ))}
             </ul>
@@ -172,13 +183,13 @@ export default function PlayerPage() {
         <>
           <hr />
           <h3>Declared Winner Results</h3>
-          <ul>
+          <ol style={{ paddingLeft: 20 }}>
             {results.map((r, idx) => (
-              <li key={r.name + r.result + idx}>
-                Name: {r.name}, Horse: {r.horse}, Wager: {r.wager}, Result: {r.result}
+              <li key={r.name + r.result + idx} style={{ wordBreak: 'break-word' }}>
+                {r.name}, Result: {r.result}
               </li>
             ))}
-          </ul>
+          </ol>
         </>
       )}
     </div>
