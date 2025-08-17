@@ -1,3 +1,4 @@
+import { WS_URL, API_BASE_URL } from "../consts";
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 
 export type Submission = { name: string; horse: string; wager: number };
@@ -10,15 +11,6 @@ type SubmissionsContextType = {
 };
 
 const SubmissionsContext = createContext<SubmissionsContextType | undefined>(undefined);
-
-//   import.meta.env.VITE_API_URL ||
-const API_BASE_URL = "https://hidden-bet-api.onrender.com";
-// const API_BASE_URL =
-//   window.location.hostname === "localhost" ? "http://localhost:3001" : "https://hidden-bet-api.onrender.com";
-
-//   import.meta.env.VITE_WS_URL ||
-const WS_URL = `wss://hidden-bet-api.onrender.com`;
-// const WS_URL = window.location.hostname === "localhost" ? "ws://localhost:3001" : `wss://hidden-bet-api.onrender.com`;
 
 export function SubmissionsProvider({ children }: { children: React.ReactNode }) {
   const [allSubmissions, setAllSubmissions] = useState<{ [key: string]: Submission } | null>(null);

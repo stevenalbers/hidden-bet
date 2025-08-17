@@ -1,3 +1,6 @@
+import { API_BASE_URL } from "../consts";
+import { Submission } from "types/api";
+
 type Horse = "Horse A" | "Horse B";
 
 async function handleDeclareWinner(horse: Horse) {
@@ -8,19 +11,11 @@ async function handleDeclareWinner(horse: Horse) {
     credentials: "include",
   });
 }
-import { Submission } from "types/api";
 
 interface AdminPageProps {
   allSubmissions: { [key: string]: Submission } | null;
   onClear: () => void;
 }
-const API_BASE_URL = "https://hidden-bet-api.onrender.com";
-
-// const API_BASE_URL =
-//   import.meta.env.VITE_API_URL ||
-//   (window.location.hostname === "localhost"
-//     ? "http://localhost:3001"
-//     : `https://${window.location.hostname}`);
 
 export default function AdminPage({ allSubmissions, onClear }: AdminPageProps) {
   const handleClearPlayer = async (sessionId: string) => {
