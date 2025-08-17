@@ -13,7 +13,7 @@ interface SessionWebSocket extends WebSocket {
 
 const PORT = process.env.PORT || 3001;
 const app = express();
-const submissions: { [sessionId: string]: string } = {};
+const submissions: { [sessionId: string]: { name: string; horse: string; wager: number } } = {};
 let lastSubmitterSessionId: string | null = null;
 
 app.use(
@@ -37,16 +37,15 @@ app.use(bodyParser.json());
 // Get my submission
 app.get("/my-submission", (req, res) => {
   if (!req.session) return res.sendStatus(500);
-  const text = submissions[req.session.id] || null;
-  res.json({ text });
+  const submission = submissions[req.session.id] || null;
+  res.json({ submission });
 });
 
 // Submit text
 app.post("/submit", (req, res) => {
-  const { text } = req.body;
+  const { name, horse, wager } = req.body;
   if (!req.session) return res.sendStatus(500);
-  submissions[req.session.id] = text;
-  console.log("sending text:", text);
+  submissions[req.session.id] = { name, horse, wager };
   lastSubmitterSessionId = req.session.id;
   res.json({ success: true });
   broadcastSubmissions();
@@ -84,7 +83,7 @@ function getSessionIdFromCookie(cookie: string | undefined) {
 
 function allSubmitted() {
   // Change this threshold as needed
-  return Object.keys(submissions).length >= 3;
+  return Object.keys(submissions).length >= 1;
 }
 
 // Attach sessionId to each ws connection
