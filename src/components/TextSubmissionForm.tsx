@@ -1,36 +1,39 @@
 import React, { useEffect, useRef, useState } from "react";
 
-
 // Use env variable, or infer from window.location, or fallback to localhost for local dev
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
-  (window.location.hostname === "localhost"
-    ? "http://localhost:3001"
-    : `https://${window.location.hostname}`);
+  (window.location.hostname === "localhost" ? "http://localhost:3001" : `https://${window.location.hostname}`);
 
 const WS_URL =
   import.meta.env.VITE_WS_URL ||
-  (window.location.hostname === "localhost"
-    ? "ws://localhost:3001"
-    : `wss://${window.location.hostname}`);
+  (window.location.hostname === "localhost" ? "ws://localhost:3001" : `wss://${window.location.hostname}`);
 
-
+type Submission = { name: string; horse: string; wager: number };
 
 export default function TextSubmissionForm() {
-  const [text, setText] = useState("");
-  const [mySubmission, setMySubmission] = useState<string | null>(null);
-  const [allSubmissions, setAllSubmissions] = useState<{ [key: string]: string } | null>(null);
+  const [name, setName] = useState("");
+  const [horse, setHorse] = useState<string>("");
+  const [wager, setWager] = useState<number>(0);
+  const [mySubmission, setMySubmission] = useState<Submission | null>(null);
+  const [allSubmissions, setAllSubmissions] = useState<Submission[] | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   // Setup WebSocket connection
   useEffect(() => {
-  fetch(`${API_BASE_URL}/my-submission`, {
+    fetch(`${API_BASE_URL}/my-submission`, {
       credentials: "include",
     })
       .then((res) => res.json())
-      .then((data) => setMySubmission(data.text));
+      .then((data) => {
+        if (data && data.submission) {
+          setMySubmission(data.submission);
+        } else {
+          setMySubmission(null);
+        }
+      });
 
-  const ws = new WebSocket(WS_URL);
+    const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 
     ws.onmessage = (event) => {
@@ -45,11 +48,12 @@ export default function TextSubmissionForm() {
       if (msg.type === "clear") {
         setMySubmission(null);
         setAllSubmissions(null);
-        setText("");
-        return; // <-- Ignore any further processing for this message
+        setName("");
+        setHorse("");
+        setWager(0);
+        return;
       }
       if (msg.type === "all-submissions") {
-        // Only update if submissions is not null
         if (msg.submissions !== null) {
           setAllSubmissions(msg.submissions);
         } else {
@@ -65,19 +69,22 @@ export default function TextSubmissionForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  await fetch(`${API_BASE_URL}/submit`, {
+    const payload: Submission = { name, horse, wager };
+    await fetch(`${API_BASE_URL}/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(payload),
     });
-    setMySubmission(text);
-    setText("");
+    setMySubmission(payload);
+    setName("");
+    setHorse("");
+    setWager(0);
     // No need to fetch all submissions; will get update via WebSocket
   };
 
   const handleClear = async () => {
-  await fetch(`${API_BASE_URL}/clear-submissions`, {
+    await fetch(`${API_BASE_URL}/clear-submissions`, {
       method: "POST",
       credentials: "include",
     });
@@ -86,19 +93,71 @@ export default function TextSubmissionForm() {
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Enter your text"
-          disabled={!!mySubmission}
-        />
-        <button type="submit" disabled={!!mySubmission || !text.trim()}>
+        <div>
+          <label>
+            Your name:
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={!!mySubmission}
+              required
+            />
+          </label>
+        </div>
+        <div>
+          <label>Your horse:</label>
+          <label>
+            <input
+              type="radio"
+              name="horse"
+              value="Horse A"
+              checked={horse === "Horse A"}
+              onChange={() => setHorse("Horse A")}
+              disabled={!!mySubmission}
+              required
+            />
+            Horse A
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="horse"
+              value="Horse B"
+              checked={horse === "Horse B"}
+              onChange={() => setHorse("Horse B")}
+              disabled={!!mySubmission}
+              required
+            />
+            Horse B
+          </label>
+        </div>
+        <div>
+          <label>
+            Your wager (0-100):
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={wager}
+              onChange={(e) => setWager(Number(e.target.value))}
+              disabled={!!mySubmission}
+              required
+            />
+          </label>
+        </div>
+        <button type="submit" disabled={!!mySubmission || !name.trim() || !horse || wager < 0 || wager > 100}>
           Submit
         </button>
       </form>
       {mySubmission && (
         <div>
-          <p>Your submission: {mySubmission}</p>
+          <p>Your submission:</p>
+          <ul>
+            <li>Name: {mySubmission.name}</li>
+            <li>Horse: {mySubmission.horse}</li>
+            <li>Wager: {mySubmission.wager}</li>
+          </ul>
           <button onClick={handleClear}>Clear All Submissions</button>
         </div>
       )}
@@ -107,7 +166,9 @@ export default function TextSubmissionForm() {
       {allSubmissions ? (
         <ul>
           {Object.entries(allSubmissions).map(([id, submission]) => (
-            <li key={id}>{submission}</li>
+            <li key={id}>
+              Name: {submission.name}, Horse: {submission.horse}, Wager: {submission.wager}
+            </li>
           ))}
         </ul>
       ) : (
