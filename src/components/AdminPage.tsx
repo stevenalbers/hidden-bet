@@ -44,6 +44,7 @@ export default function AdminPage({ allSubmissions, onClear }: AdminPageProps) {
       await handleDeclareWinner(chosen);
     }, 10000);
   };
+  console.log("all submissions", allSubmissions);
 
   return (
     <div>
@@ -113,15 +114,15 @@ export default function AdminPage({ allSubmissions, onClear }: AdminPageProps) {
         <ul>
           {Object.entries(allSubmissions).map(([id, submission]) => (
             <li key={id}>
-              {submission.name}
-              <button style={{ marginLeft: 8 }} onClick={() => handleClearPlayer(id)}>
+              <button style={{ marginRight: 8 }} onClick={() => handleClearPlayer(id)}>
                 Clear
               </button>
+              {submission.name}
             </li>
           ))}
         </ul>
       ) : (
-        <p>Waiting for all submissions...</p>
+        <p>No submissions yet.</p>
       )}
     </div>
   );
