@@ -2,24 +2,63 @@ import React, { useEffect, useState } from "react";
 
 // Enhanced horse race animation component (copied from AdminPage)
 export // Enhanced horse race animation component
-function HorseRaceAnimation({ winner, finished }: { winner: 'Horse A' | 'Horse B' | null, finished?: boolean }) {
+function HorseRaceAnimation({ winner, finished }: { winner: "Horse A" | "Horse B" | null; finished?: boolean }) {
   const [progressA, setProgressA] = useState(0);
   const [progressB, setProgressB] = useState(0);
 
   // Detect dark mode
-  const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const horseTextColor = isDark ? '#fff' : '#111';
-  const horseShadow = isDark ? '0 2px 8px #000' : '0 2px 8px #fff';
+  const isDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const horseTextColor = isDark ? "#fff" : "#111";
+  const horseShadow = isDark ? "0 2px 8px #000" : "0 2px 8px #fff";
 
   useEffect(() => {
     let start: number | null = null;
     let raf: number;
+    // Generate random lead changes (crossings)
+    const crossings = 3 + Math.floor(Math.random() * 3); // 3-5 crossings
+    // Each crossing is a time (ms) between 1s and 9s, sorted
+    const crossingTimes = Array.from({ length: crossings }, () => 1000 + Math.random() * 8000).sort((a, b) => a - b);
+    // At each crossing, the lead swaps
+    let lastLead: "A" | "B" = Math.random() < 0.5 ? "A" : "B";
+    const leadSchedule: { t: number; lead: "A" | "B" }[] = crossingTimes.map((t) => {
+      lastLead = lastLead === "A" ? "B" : "A";
+      return { t, lead: lastLead };
+    });
+    // Winner is in the lead at the end
+    leadSchedule.push({ t: 10000, lead: winner === "Horse A" ? "A" : "B" });
+
+    function getLeadAt(t: number) {
+      let lead: "A" | "B" = leadSchedule[0]?.lead || (winner === "Horse A" ? "A" : "B");
+      for (let i = 0; i < leadSchedule.length; ++i) {
+        if (t >= leadSchedule[i].t) {
+          lead = leadSchedule[i].lead;
+        } else {
+          break;
+        }
+      }
+      return lead;
+    }
+
     function animate(ts: number) {
       if (start === null) start = ts;
       const elapsed = ts - start;
       // Winner finishes at 10s, loser at 10.5s
-      const pctA = winner === 'Horse A' ? Math.min(elapsed / 10000, 1) : Math.min(elapsed / 10500, 1);
-      const pctB = winner === 'Horse B' ? Math.min(elapsed / 10000, 1) : Math.min(elapsed / 10500, 1);
+      const t = Math.min(elapsed, 10500);
+      const lead = getLeadAt(t);
+      // Add some jitter for realism
+      const jitterA = (Math.random() - 0.5) * 0.01;
+      const jitterB = (Math.random() - 0.5) * 0.01;
+      let pctA, pctB;
+      if (lead === "A") {
+        pctA = Math.min(t / 10000 + 0.01 + jitterA, 1);
+        pctB = Math.min(t / 10000 - 0.01 + jitterB, 1, pctA - 0.01);
+      } else {
+        pctB = Math.min(t / 10000 + 0.01 + jitterB, 1);
+        pctA = Math.min(t / 10000 - 0.01 + jitterA, 1, pctB - 0.01);
+      }
+      // Loser slows down after 10s
+      if (winner === "Horse A" && t > 10000) pctB = Math.min((t - 10000) / 500 + 1, 1);
+      if (winner === "Horse B" && t > 10000) pctA = Math.min((t - 10000) / 500 + 1, 1);
       setProgressA(pctA);
       setProgressB(pctB);
       if (pctA < 1 || pctB < 1) {
@@ -32,15 +71,15 @@ function HorseRaceAnimation({ winner, finished }: { winner: 'Horse A' | 'Horse B
 
   // Highlight the winning horse after the race
   const highlightStyle = {
-    color: '#fff',
-    background: '#28a745',
+    color: "#fff",
+    background: "#28a745",
     borderRadius: 8,
-    padding: '0.2em 0.7em',
+    padding: "0.2em 0.7em",
     marginLeft: 12,
     fontWeight: 900,
-    boxShadow: '0 2px 8px #222',
-    border: '2px solid #fff',
-    position: 'relative' as const,
+    boxShadow: "0 2px 8px #222",
+    border: "2px solid #fff",
+    position: "relative" as const,
     zIndex: 3,
   };
 
@@ -48,7 +87,7 @@ function HorseRaceAnimation({ winner, finished }: { winner: 'Horse A' | 'Horse B
     <>
       <div
         style={{
-          position: 'absolute',
+          position: "absolute",
           top: 30,
           left: `calc(${progressA * 90}% - 32px)`,
           fontSize: 48,
@@ -56,28 +95,20 @@ function HorseRaceAnimation({ winner, finished }: { winner: 'Horse A' | 'Horse B
           textShadow: horseShadow,
           fontWeight: 700,
           zIndex: 1,
-          transition: 'left 0.1s linear',
-          display: 'flex',
-          alignItems: 'center',
-          whiteSpace: 'nowrap',
-          overflow: 'visible',
+          transition: "left 0.1s linear",
+          display: "flex",
+          alignItems: "center",
+          whiteSpace: "nowrap",
+          overflow: "visible",
         }}
       >
-        <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🐎</span>
-        <span
-          style={
-            finished && winner === 'Horse A'
-              ? highlightStyle
-              : { marginLeft: 12 }
-          }
-        >
-          Horse A
-        </span>
-        {finished && winner === 'Horse A' && <ConfettiExplosion />}
+        <span style={{ transform: "scaleX(-1)", display: "inline-block" }}>🐎</span>
+        <span style={finished && winner === "Horse A" ? highlightStyle : { marginLeft: 12 }}>Horse A</span>
+        {finished && winner === "Horse A" && <ConfettiExplosion />}
       </div>
       <div
         style={{
-          position: 'absolute',
+          position: "absolute",
           top: 100,
           left: `calc(${progressB * 90}% - 32px)`,
           fontSize: 48,
@@ -85,24 +116,16 @@ function HorseRaceAnimation({ winner, finished }: { winner: 'Horse A' | 'Horse B
           textShadow: horseShadow,
           fontWeight: 700,
           zIndex: 1,
-          transition: 'left 0.1s linear',
-          display: 'flex',
-          alignItems: 'center',
-          whiteSpace: 'nowrap',
-          overflow: 'visible',
+          transition: "left 0.1s linear",
+          display: "flex",
+          alignItems: "center",
+          whiteSpace: "nowrap",
+          overflow: "visible",
         }}
       >
-        <span style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>🐎</span>
-        <span
-          style={
-            finished && winner === 'Horse B'
-              ? highlightStyle
-              : { marginLeft: 12 }
-          }
-        >
-          Horse B
-        </span>
-        {finished && winner === 'Horse B' && <ConfettiExplosion />}
+        <span style={{ transform: "scaleX(-1)", display: "inline-block" }}>🐎</span>
+        <span style={finished && winner === "Horse B" ? highlightStyle : { marginLeft: 12 }}>Horse B</span>
+        {finished && winner === "Horse B" && <ConfettiExplosion />}
       </div>
     </>
   );
@@ -116,13 +139,22 @@ export function ConfettiExplosion() {
     const top = Math.random() * 40 + 10;
     const rotate = Math.random() * 360;
     const color = [
-      '#ff595e', '#ffca3a', '#8ac926', '#1982c4', '#6a4c93', '#fff', '#222', '#f7b801', '#f95738', '#43aa8b'
+      "#ff595e",
+      "#ffca3a",
+      "#8ac926",
+      "#1982c4",
+      "#6a4c93",
+      "#fff",
+      "#222",
+      "#f7b801",
+      "#f95738",
+      "#43aa8b",
     ][Math.floor(Math.random() * 10)];
     return (
       <div
         key={i}
         style={{
-          position: 'absolute',
+          position: "absolute",
           left: `${left}%`,
           top: `${top}%`,
           width: 10,
@@ -132,13 +164,13 @@ export function ConfettiExplosion() {
           transform: `rotate(${rotate}deg)`,
           opacity: 0.85,
           zIndex: 10,
-          animation: 'confetti-fall 1.2s ease-out',
+          animation: "confetti-fall 1.2s ease-out",
         }}
       />
     );
   });
   return (
-    <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+    <div style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
       {confetti}
       <style>{`
         @keyframes confetti-fall {

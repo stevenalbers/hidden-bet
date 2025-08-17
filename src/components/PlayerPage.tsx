@@ -7,7 +7,11 @@ export default function PlayerPage() {
   const [name, setName] = useState("");
   const [horse, setHorse] = useState<string>("");
   const [wager, setWager] = useState<number | "">("");
-  const [mySubmission, setMySubmission] = useState<Submission | null>(null);
+  // Add bookieBet to mySubmission
+  const [mySubmission, setMySubmission] = useState<(Submission & { bookieBet: number; totalWager: number }) | null>(
+    null
+  );
+  const [, setBookieBet] = useState<number>(0);
   const { allSubmissions, results } = useSubmissions();
 
   // --- Race Animation State ---
@@ -61,16 +65,38 @@ export default function PlayerPage() {
     }
   }, [allSubmissions, mySubmission]);
 
+  // Bookie bet logic: generate once per user per submission and persist in localStorage
+  function getBookieBet(sub: Submission) {
+    // Use a hash of name+horse+wager to seed a pseudo-random number between 0-50
+    const key = `bookieBet|${sub.name}|${sub.horse}|${sub.wager}`;
+    const stored = localStorage.getItem(key);
+    if (stored !== null) return Number(stored);
+    // Only generate if not present
+    const str = `${sub.name}|${sub.horse}|${sub.wager}`;
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) + hash + str.charCodeAt(i);
+    }
+    const bookie = Math.abs(hash) % 51;
+    localStorage.setItem(key, String(bookie));
+    return bookie;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload: Submission = { name, horse, wager: wager === "" ? 0 : Number(wager) };
+    const wagerVal = wager === "" ? 0 : Number(wager);
+    const payload: Submission = { name, horse, wager: wagerVal };
+    // Generate Bookie bet and persist for this submission
+    const bookie = getBookieBet(payload);
+    setBookieBet(bookie);
+    // Send to backend: only send player wager (not bookie bet)
     await fetch(`${API_BASE_URL}/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify(payload),
     });
-    setMySubmission(payload);
+    setMySubmission({ ...payload, bookieBet: bookie, totalWager: wagerVal + bookie });
     setName("");
     setHorse("");
     setWager("");
@@ -179,7 +205,13 @@ export default function PlayerPage() {
           <ul>
             <li>Name: {mySubmission.name}</li>
             <li>Horse: {mySubmission.horse}</li>
-            <li>Wager: {mySubmission.wager}</li>
+            <li>My Wager: {mySubmission.wager}</li>
+            <li>
+              Bookie's Wager: {typeof mySubmission.bookieBet === 'number' ? mySubmission.bookieBet : getBookieBet(mySubmission)}
+            </li>
+            <li>
+              Total Wager: <b>{typeof mySubmission.totalWager === 'number' ? mySubmission.totalWager : mySubmission.wager + getBookieBet(mySubmission)}</b>
+            </li>
           </ul>
         </div>
       )}
@@ -272,14 +304,20 @@ export default function PlayerPage() {
                   {Object.values(allSubmissions)
                     .filter((sub) => sub.horse === "Horse A")
                     .sort((a, b) => b.wager - a.wager)
-                    .map((submission, idx) => (
-                      <li
-                        key={submission.name + submission.wager + idx}
-                        style={{ wordBreak: "break-word", color: "inherit" }}
-                      >
-                        {submission.name}, Wager: {submission.wager}
-                      </li>
-                    ))}
+                    .map((submission, idx) => {
+                      // For display, generate a deterministic bookie bet per submission
+                      const bookie = getBookieBet(submission);
+                      const total = submission.wager + bookie;
+                      return (
+                        <li
+                          key={submission.name + submission.wager + idx}
+                          style={{ wordBreak: "break-word", color: "inherit" }}
+                        >
+                          {submission.name}, My Wager: {submission.wager}, Bookie's Wager: {bookie}, Total Wager:{" "}
+                          <b>{total}</b>
+                        </li>
+                      );
+                    })}
                 </ul>
               </div>
               {/* Horse B Column */}
@@ -289,14 +327,19 @@ export default function PlayerPage() {
                   {Object.values(allSubmissions)
                     .filter((sub) => sub.horse === "Horse B")
                     .sort((a, b) => b.wager - a.wager)
-                    .map((submission, idx) => (
-                      <li
-                        key={submission.name + submission.wager + idx}
-                        style={{ wordBreak: "break-word", color: "inherit" }}
-                      >
-                        {submission.name}, Wager: {submission.wager}
-                      </li>
-                    ))}
+                    .map((submission, idx) => {
+                      const bookie = getBookieBet(submission);
+                      const total = submission.wager + bookie;
+                      return (
+                        <li
+                          key={submission.name + submission.wager + idx}
+                          style={{ wordBreak: "break-word", color: "inherit" }}
+                        >
+                          {submission.name}, My Wager: {submission.wager}, Bookie's Wager: {bookie}, Total Wager:{" "}
+                          <b>{total}</b>
+                        </li>
+                      );
+                    })}
                 </ul>
               </div>
             </div>
@@ -358,11 +401,22 @@ export default function PlayerPage() {
               <h3>Declared Winner Results</h3>
               <ol style={{ paddingLeft: 20 }}>
                 {results &&
-                  results.map((r, idx) => (
-                    <li key={r.name + r.result + idx} style={{ wordBreak: "break-word" }}>
-                      {r.name}, Result: {r.result}
-                    </li>
-                  ))}
+                  results.map((r, idx) => {
+                    const bookie = getBookieBet(r);
+                    const total = r.wager + bookie;
+                    // Calculate result using total wager
+                    let result = 0;
+                    if (r.horse === raceWinner) {
+                      result = 100 + total;
+                    } else {
+                      result = 100 - total;
+                    }
+                    return (
+                      <li key={r.name + r.result + idx} style={{ wordBreak: "break-word" }}>
+                        {r.name}, Total Wager: <b>{total}</b>, Result: {result}
+                      </li>
+                    );
+                  })}
               </ol>
             </>
           )}
