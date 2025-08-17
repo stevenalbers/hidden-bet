@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Submission, useSubmissions } from "./SubmissionsContext";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (window.location.hostname === "localhost" ? "http://localhost:3001" : `https://${window.location.hostname}`);
+const API_BASE_URL = "https://hidden-bet-api.onrender.com";
+
+// const API_BASE_URL =
+//   import.meta.env.VITE_API_URL ||
+//   (window.location.hostname === "localhost" ? "http://localhost:3001" : `https://${window.location.hostname}`);
 
 export default function PlayerPage() {
   const [name, setName] = useState("");
