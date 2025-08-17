@@ -6,6 +6,12 @@ function HorseRaceAnimation({ winner, finished }: { winner: "Horse A" | "Horse B
   const [progressA, setProgressA] = useState(0);
   const [progressB, setProgressB] = useState(0);
 
+  // Always reset progress to 0 when a new race starts
+  useEffect(() => {
+    setProgressA(0);
+    setProgressB(0);
+  }, [winner]);
+
   // Detect dark mode
   const isDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
   const horseTextColor = isDark ? "#fff" : "#111";
@@ -65,7 +71,9 @@ function HorseRaceAnimation({ winner, finished }: { winner: "Horse A" | "Horse B
         raf = requestAnimationFrame(animate);
       }
     }
-    raf = requestAnimationFrame(animate);
+    if (winner) {
+      raf = requestAnimationFrame(animate);
+    }
     return () => cancelAnimationFrame(raf);
   }, [winner]);
 
@@ -85,11 +93,33 @@ function HorseRaceAnimation({ winner, finished }: { winner: "Horse A" | "Horse B
 
   return (
     <>
+      {/* Horse A Name (fixed left) */}
       <div
         style={{
           position: "absolute",
           top: 30,
-          left: `calc(${progressA * 90}% - 32px)`,
+          left: 0,
+          fontSize: 24,
+          color: horseTextColor,
+          textShadow: horseShadow,
+          fontWeight: 700,
+          zIndex: 2,
+          display: "flex",
+          alignItems: "center",
+          whiteSpace: "nowrap",
+          pointerEvents: "none",
+        }}
+      >
+        <span style={finished && winner === "Horse A" ? highlightStyle : {}}>
+          Horse A
+        </span>
+      </div>
+      {/* Horse A Emoji (animated) */}
+      <div
+        style={{
+          position: "absolute",
+          top: 30,
+          left: `calc(${progressA * 100}% - 32px)`,
           fontSize: 48,
           color: horseTextColor,
           textShadow: horseShadow,
@@ -103,14 +133,35 @@ function HorseRaceAnimation({ winner, finished }: { winner: "Horse A" | "Horse B
         }}
       >
         <span style={{ transform: "scaleX(-1)", display: "inline-block" }}>🐎</span>
-        <span style={finished && winner === "Horse A" ? highlightStyle : { marginLeft: 12 }}>Horse A</span>
         {finished && winner === "Horse A" && <ConfettiExplosion />}
       </div>
+      {/* Horse B Name (fixed left) */}
       <div
         style={{
           position: "absolute",
           top: 100,
-          left: `calc(${progressB * 90}% - 32px)`,
+          left: 0,
+          fontSize: 24,
+          color: horseTextColor,
+          textShadow: horseShadow,
+          fontWeight: 700,
+          zIndex: 2,
+          display: "flex",
+          alignItems: "center",
+          whiteSpace: "nowrap",
+          pointerEvents: "none",
+        }}
+      >
+        <span style={finished && winner === "Horse B" ? highlightStyle : {}}>
+          Horse B
+        </span>
+      </div>
+      {/* Horse B Emoji (animated) */}
+      <div
+        style={{
+          position: "absolute",
+          top: 100,
+          left: `calc(${progressB * 100}% - 32px)`,
           fontSize: 48,
           color: horseTextColor,
           textShadow: horseShadow,
@@ -124,7 +175,6 @@ function HorseRaceAnimation({ winner, finished }: { winner: "Horse A" | "Horse B
         }}
       >
         <span style={{ transform: "scaleX(-1)", display: "inline-block" }}>🐎</span>
-        <span style={finished && winner === "Horse B" ? highlightStyle : { marginLeft: 12 }}>Horse B</span>
         {finished && winner === "Horse B" && <ConfettiExplosion />}
       </div>
     </>
