@@ -6,6 +6,7 @@ import cors from "cors";
 import { createServer } from "http";
 import { WebSocket, WebSocketServer } from "ws";
 import bodyParser from "body-parser";
+// import { TOTAL_PLAYERS } from "consts";
 
 interface SessionWebSocket extends WebSocket {
   sessionId?: string | null;
@@ -14,7 +15,7 @@ interface SessionWebSocket extends WebSocket {
 const PORT = process.env.PORT || 3001;
 const app = express();
 const submissions: { [sessionId: string]: { name: string; horse: string; wager: number } } = {};
-let lastSubmitterSessionId: string | null = null;
+// let lastSubmitterSessionId: string | null = null;
 
 app.use(
   cors({
@@ -46,7 +47,7 @@ app.post("/submit", (req, res) => {
   const { name, horse, wager } = req.body;
   if (!req.session) return res.sendStatus(500);
   submissions[req.session.id] = { name, horse, wager };
-  lastSubmitterSessionId = req.session.id;
+  // lastSubmitterSessionId = req.session.id;
   res.json({ success: true });
   broadcastSubmissions();
 });
@@ -57,7 +58,7 @@ app.post("/clear-submissions", (_req, res) => {
   for (const key in submissions) {
     delete submissions[key];
   }
-  lastSubmitterSessionId = null;
+  // lastSubmitterSessionId = null;
   res.json({ success: true });
 
   console.log("Broadcasting CLEAR to all clients:", wss.clients.size);
@@ -128,10 +129,10 @@ function getSessionIdFromCookie(cookie: string | undefined) {
   return match ? match[1] : null;
 }
 
-function allSubmitted() {
-  // Change this threshold as needed
-  return Object.keys(submissions).length >= 2;
-}
+// function allSubmitted() {
+//   // Change this threshold as needed
+//   return Object.keys(submissions).length >= TOTAL_PLAYERS;
+// }
 
 // Attach sessionId to each ws connection
 wss.on("connection", function connection(ws, req) {
@@ -141,31 +142,15 @@ wss.on("connection", function connection(ws, req) {
   (ws as SessionWebSocket).sessionId = sessionId;
 
   // Determine if this is an admin client (simple check: if referrer contains /admin or ?admin=1)
-  const isAdmin = req.headers.referer?.includes("/admin") || req.url?.includes("admin=1");
+  // const isAdmin = req.headers.referer?.includes("/admin") || req.url?.includes("admin=1");
 
-  // On connect, send current state
-  if (isAdmin) {
-    ws.send(
-      JSON.stringify({
-        type: "all-submissions",
-        submissions,
-      })
-    );
-  } else if (allSubmitted() || (sessionId && sessionId === lastSubmitterSessionId)) {
-    ws.send(
-      JSON.stringify({
-        type: "all-submissions",
-        submissions: allSubmitted() ? submissions : null,
-      })
-    );
-  } else {
-    ws.send(
-      JSON.stringify({
-        type: "all-submissions",
-        submissions: null,
-      })
-    );
-  }
+  // On connect, always send current state (never null)
+  ws.send(
+    JSON.stringify({
+      type: "all-submissions",
+      submissions,
+    })
+  );
 });
 
 function broadcastSubmissions() {

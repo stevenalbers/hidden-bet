@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 // Ref for the race animation container
 import { HorseRaceAnimation, ConfettiExplosion } from "./HorseRaceAnimation";
 import { Submission, useSubmissions } from "./SubmissionsContext";
-import { API_BASE_URL } from "../consts";
+import { API_BASE_URL, TOTAL_PLAYERS } from "../consts";
 
 export default function PlayerPage() {
   const [name, setName] = useState("");
@@ -34,6 +34,7 @@ export default function PlayerPage() {
       setRaceWinner(null);
     }
   }, [results]);
+  console.log("submissions:", allSubmissions);
 
   // Fetch my submission on mount
   useEffect(() => {
@@ -105,7 +106,7 @@ export default function PlayerPage() {
   const showRace =
     racing || (results && results[0] && (results[0].horse === "Horse A" || results[0].horse === "Horse B"));
 
-  const allSubmitted = allSubmissions && Object.keys(allSubmissions).length >= 2;
+  const allSubmitted = allSubmissions && Object.keys(allSubmissions).length >= TOTAL_PLAYERS;
   return (
     <div style={{ maxWidth: "100%", margin: "0 auto", padding: "1rem" }}>
       <form onSubmit={handleSubmit}>
@@ -238,7 +239,7 @@ export default function PlayerPage() {
             marginBottom: 16,
           }}
         >
-          Bets submitted: {allSubmissions ? Object.keys(allSubmissions).length : 0}/2
+          Bets submitted: {allSubmissions ? Object.keys(allSubmissions).length : 0}/{TOTAL_PLAYERS}
         </div>
       ) : (
         <div style={{ marginBottom: 16 }}>
@@ -284,7 +285,7 @@ export default function PlayerPage() {
               }
             }
           `}</style>
-          {accordionOpen && allSubmissions && Object.keys(allSubmissions).length >= 2 && (
+          {accordionOpen && allSubmissions && Object.keys(allSubmissions).length >= TOTAL_PLAYERS && (
             <div
               style={{
                 display: "flex",
@@ -415,9 +416,9 @@ export default function PlayerPage() {
                     // Calculate result using total wager
                     let result = 0;
                     if (r.horse === raceWinner) {
-                      result = 100 + total;
+                      result = 150 + total;
                     } else {
-                      result = 100 - total;
+                      result = 150 - total;
                     }
                     return (
                       <li key={r.name + r.result + idx} style={{ wordBreak: "break-word" }}>
