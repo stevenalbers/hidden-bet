@@ -206,9 +206,11 @@ export default function PlayerPage() {
             <li>Name: {mySubmission.name}</li>
             <li>Horse: {mySubmission.horse}</li>
             <li>My Wager: {mySubmission.wager}</li>
-            <li>Bookie's Wager: {mySubmission.bookieBet}</li>
             <li>
-              Total Wager: <b>{mySubmission.totalWager}</b>
+              Bookie's Wager: {typeof mySubmission.bookieBet === 'number' ? mySubmission.bookieBet : getBookieBet(mySubmission)}
+            </li>
+            <li>
+              Total Wager: <b>{typeof mySubmission.totalWager === 'number' ? mySubmission.totalWager : mySubmission.wager + getBookieBet(mySubmission)}</b>
             </li>
           </ul>
         </div>
