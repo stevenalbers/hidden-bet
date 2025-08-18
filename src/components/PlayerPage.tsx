@@ -96,9 +96,19 @@ export default function PlayerPage() {
       credentials: "include",
       body: JSON.stringify(payload),
     });
-    // Force a page refresh after submit
-    window.location.reload();
+    // No reload here; reload will be handled by useEffect when all bets are in
   };
+  // Only reload once when all bets are submitted
+  useEffect(() => {
+    if (allSubmissions && Object.keys(allSubmissions).length >= TOTAL_PLAYERS) {
+      // Only reload if not already reloaded in this session
+      const reloadedKey = 'allBetsReloaded';
+      if (!sessionStorage.getItem(reloadedKey)) {
+        sessionStorage.setItem(reloadedKey, 'true');
+        window.location.reload();
+      }
+    }
+  }, [allSubmissions]);
   // Accordion state for All Submissions
   const [accordionOpen, setAccordionOpen] = useState(false);
 
