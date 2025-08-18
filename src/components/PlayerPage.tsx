@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 // Ref for the race animation container
 import { HorseRaceAnimation, ConfettiExplosion } from "./HorseRaceAnimation";
 import { Submission, useSubmissions } from "./SubmissionsContext";
-import { API_BASE_URL, TOTAL_PLAYERS } from "../consts";
+import { API_BASE_URL, horseMap, TOTAL_PLAYERS } from "../consts";
 
 export default function PlayerPage() {
   // Ref for draft order section
@@ -26,7 +26,7 @@ export default function PlayerPage() {
   // Auto scroll to draft order when race completes and draft order appears
   useEffect(() => {
     if (!racing && raceWinner && draftOrderRef.current) {
-      draftOrderRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      draftOrderRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [racing, raceWinner]);
 
@@ -53,7 +53,18 @@ export default function PlayerPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data && data.submission) {
-          setMySubmission(data.submission);
+          setMySubmission((prev) => {
+            // Only update if backend submission is different from optimistic one
+            if (
+              !prev ||
+              prev.name !== data.submission.name ||
+              prev.horse !== data.submission.horse ||
+              prev.wager !== data.submission.wager
+            ) {
+              return data.submission;
+            }
+            return prev;
+          });
         } else {
           setMySubmission(null);
         }
@@ -64,7 +75,7 @@ export default function PlayerPage() {
   useEffect(() => {
     // Only reset mySubmission if allSubmissions is not null (i.e., after a clear),
     // and mySubmission is not present in allSubmissions
-    if (mySubmission && allSubmissions !== null) {
+    if (mySubmission && !!allSubmissions && Object.keys(allSubmissions).length <= 0) {
       const stillExists = Object.values(allSubmissions).some(
         (sub) => sub.name === mySubmission.name && sub.horse === mySubmission.horse && sub.wager === mySubmission.wager
       );
@@ -98,6 +109,8 @@ export default function PlayerPage() {
     // Generate Bookie bet and persist for this submission
     const bookie = getBookieBet(payload);
     setBookieBet(bookie);
+    // Optimistically update mySubmission so UI updates immediately
+    setMySubmission({ ...payload, bookieBet: bookie, totalWager: wagerVal + bookie });
     // Send to backend: only send player wager (not bookie bet)
     await fetch(`${API_BASE_URL}/submit`, {
       method: "POST",
@@ -128,7 +141,7 @@ export default function PlayerPage() {
   // Auto scroll to draft order when race completes and draft order appears
   useEffect(() => {
     if (!racing && raceWinner && draftOrderRef.current) {
-      draftOrderRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      draftOrderRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [racing, raceWinner]);
 
@@ -162,7 +175,7 @@ export default function PlayerPage() {
                 disabled={!!mySubmission}
                 required
               />
-              Horse A
+              Seabiscuit
             </label>
             <label>
               <input
@@ -174,7 +187,7 @@ export default function PlayerPage() {
                 disabled={!!mySubmission}
                 required
               />
-              Horse B
+              War Admiral
             </label>
           </div>
         </div>
@@ -215,12 +228,13 @@ export default function PlayerPage() {
             background: "var(--submit-bg, #222)",
             color: "var(--submit-fg, #fff)",
             boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
-            cursor: "pointer",
+            cursor: mySubmission ? "not-allowed" : "pointer",
             marginTop: 8,
-            transition: "background 0.2s, color 0.2s",
+            transition: "background 0.2s, color 0.2s, opacity 0.2s",
+            opacity: mySubmission ? 0.5 : 1,
           }}
         >
-          Submit
+          {mySubmission ? "Locked in" : "Lock in"}
         </button>
       </form>
       {mySubmission && (
@@ -228,7 +242,7 @@ export default function PlayerPage() {
           <p>Your submission:</p>
           <ul>
             <li>Name: {mySubmission.name}</li>
-            <li>Horse: {mySubmission.horse}</li>
+            <li>Horse: {horseMap[mySubmission.horse]}</li>
             <li>My Wager: {mySubmission.wager}</li>
             <li>
               Bookie's Wager:{" "}
@@ -287,9 +301,13 @@ export default function PlayerPage() {
             }}
             aria-expanded={accordionOpen}
           >
-            The bets are in
-            <span style={{ float: "right", fontWeight: 400 }}>{accordionOpen ? "▲" : "▼"}</span>
+            The bets are in!
+            <span style={{ paddingLeft: ".5rem", float: "right", fontWeight: 400 }}>{accordionOpen ? "▲" : "▼"}</span>
           </button>
+          <br />
+          <span style={{ fontSize: 10 }}>
+            (hover or tap on a <strong>player name</strong> to see their bet breakdown)
+          </span>
           {/* Contrast theme styles for accordion and submit button */}
           <style>{`
             @media (prefers-color-scheme: dark) {
@@ -327,13 +345,17 @@ export default function PlayerPage() {
                 transition: "background 0.2s, color 0.2s",
               }}
             >
-              {/* Horse A Column */}
+              {/* Seabiscuit Column */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <h4 style={{ color: "inherit" }}>Horse A</h4>
+                <h4 style={{ color: "inherit" }}>Seabiscuit</h4>
                 <ul style={{ paddingLeft: 16 }}>
                   {Object.values(allSubmissions)
                     .filter((sub) => sub.horse === "Horse A")
-                    .sort((a, b) => b.wager - a.wager)
+                    .sort((a, b) => {
+                      const totalA = a.wager + getBookieBet(a);
+                      const totalB = b.wager + getBookieBet(b);
+                      return totalB - totalA;
+                    })
                     .map((submission, idx) => {
                       const bookie = getBookieBet(submission);
                       const total = submission.wager + bookie;
@@ -382,13 +404,17 @@ export default function PlayerPage() {
                     })}
                 </ul>
               </div>
-              {/* Horse B Column */}
+              {/* War Admiral Column */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <h4 style={{ color: "inherit" }}>Horse B</h4>
+                <h4 style={{ color: "inherit" }}>War Admiral</h4>
                 <ul style={{ paddingLeft: 16 }}>
                   {Object.values(allSubmissions)
                     .filter((sub) => sub.horse === "Horse B")
-                    .sort((a, b) => b.wager - a.wager)
+                    .sort((a, b) => {
+                      const totalA = a.wager + getBookieBet(a);
+                      const totalB = b.wager + getBookieBet(b);
+                      return totalB - totalA;
+                    })
                     .map((submission, idx) => {
                       const bookie = getBookieBet(submission);
                       const total = submission.wager + bookie;
@@ -495,7 +521,7 @@ export default function PlayerPage() {
                     marginTop: 8,
                   }}
                 >
-                  Winner: {raceWinner}!
+                  Winner: {horseMap[raceWinner]}!
                 </span>
               </div>
               <div ref={draftOrderRef} />
@@ -503,67 +529,68 @@ export default function PlayerPage() {
               <h3>The Draft Order!</h3>
               <ol style={{ paddingLeft: 20 }}>
                 {results &&
-                  results.map((r, idx) => {
-                    const bookie = getBookieBet(r);
-                    const total = r.wager + bookie;
-                    // Calculate result using total wager
-                    let result = 0;
-                    const isWinner = r.horse === raceWinner;
-                    if (isWinner) {
-                      result = 150 + total;
-                    } else {
-                      result = 150 - total;
-                    }
-                    const sign = isWinner ? "+" : "-";
-                    // Place number and style
-                    const placeNumber = idx + 1;
-                    let placeStyle = {};
-                    if (idx === 0) {
-                      placeStyle = {
-                        fontSize: 28,
-                        fontWeight: 900,
-                        color: "#FFD700",
-                        marginRight: 8,
-                        verticalAlign: "middle",
-                      };
-                    } else if (idx === 1) {
-                      placeStyle = {
-                        fontSize: 22,
-                        fontWeight: 800,
-                        color: "#C0C0C0",
-                        marginRight: 8,
-                        verticalAlign: "middle",
-                      };
-                    } else if (idx === 2) {
-                      placeStyle = {
-                        fontSize: 18,
-                        fontWeight: 700,
-                        color: "#CD7F32",
-                        marginRight: 8,
-                        verticalAlign: "middle",
-                      };
-                    } else {
-                      placeStyle = {
-                        fontSize: 16,
-                        fontWeight: 600,
-                        color: "#888",
-                        marginRight: 8,
-                        verticalAlign: "middle",
-                      };
-                    }
-                    return (
-                      <li
-                        key={r.name + r.result + idx}
-                        style={{ wordBreak: "break-word", display: "flex", alignItems: "center", marginBottom: 4 }}
-                      >
-                        <span style={placeStyle}>{placeNumber}</span>
-                        <span>
-                          <b>{r.name}</b>: Race result: {sign}
-                          {total}, Grand total: <b>{result}</b>
-                        </span>
-                      </li>
-                    );
-                  })}
+                  (() => {
+                    // Compute results with calculated result value
+                    const computed = results.map((r) => {
+                      const bookie = getBookieBet(r);
+                      const total = r.wager + bookie;
+                      const isWinner = r.horse === raceWinner;
+                      const resultVal = isWinner ? 150 + total : 150 - total;
+                      return { ...r, bookie, total, resultVal };
+                    });
+                    // Sort descending by resultVal
+                    computed.sort((a, b) => b.resultVal - a.resultVal);
+                    return computed.map((r, idx) => {
+                      const sign = r.horse === raceWinner ? "+" : "-";
+                      const placeNumber = idx + 1;
+                      let placeStyle = {};
+                      if (idx === 0) {
+                        placeStyle = {
+                          fontSize: 28,
+                          fontWeight: 900,
+                          color: "#FFD700",
+                          marginRight: 8,
+                          verticalAlign: "middle",
+                        };
+                      } else if (idx === 1) {
+                        placeStyle = {
+                          fontSize: 22,
+                          fontWeight: 800,
+                          color: "#C0C0C0",
+                          marginRight: 8,
+                          verticalAlign: "middle",
+                        };
+                      } else if (idx === 2) {
+                        placeStyle = {
+                          fontSize: 18,
+                          fontWeight: 700,
+                          color: "#CD7F32",
+                          marginRight: 8,
+                          verticalAlign: "middle",
+                        };
+                      } else {
+                        placeStyle = {
+                          fontSize: 16,
+                          fontWeight: 600,
+                          color: "#888",
+                          marginRight: 8,
+                          verticalAlign: "middle",
+                        };
+                      }
+                      return (
+                        <li
+                          key={r.name + r.resultVal + idx}
+                          style={{ wordBreak: "break-word", display: "flex", alignItems: "center", marginBottom: 4 }}
+                        >
+                          <span style={placeStyle}>{placeNumber}</span>
+                          <span>
+                            <b>{r.name}</b>: Race result: {sign}
+                            {r.total}, Grand total: <b>{r.resultVal}</b>
+                          </span>
+                        </li>
+                      );
+                    });
+                  })()}
               </ol>
             </>
           )}

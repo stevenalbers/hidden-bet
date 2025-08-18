@@ -51,10 +51,10 @@ export default function AdminPage({ allSubmissions, onClear }: AdminPageProps) {
       <h2>Admin Panel</h2>
       <button onClick={onClear}>Clear All Submissions</button>
       <div style={{ margin: "1rem 0" }}>
-        <button onClick={() => handleDeclareWinner("Horse A")}>Declare Horse A Winner</button>
+        {/* <button onClick={() => handleDeclareWinner("Horse A")}>Declare Horse A Winner</button>
         <button style={{ marginLeft: 8 }} onClick={() => handleDeclareWinner("Horse B")}>
           Declare Horse B Winner
-        </button>
+        </button> */}
         <button style={{ marginLeft: 8 }} onClick={handleRace} disabled={racing}>
           Race
         </button>
