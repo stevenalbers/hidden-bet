@@ -351,7 +351,11 @@ export default function PlayerPage() {
                 <ul style={{ paddingLeft: 16 }}>
                   {Object.values(allSubmissions)
                     .filter((sub) => sub.horse === "Horse A")
-                    .sort((a, b) => b.wager - a.wager)
+                    .sort((a, b) => {
+                      const totalA = a.wager + getBookieBet(a);
+                      const totalB = b.wager + getBookieBet(b);
+                      return totalB - totalA;
+                    })
                     .map((submission, idx) => {
                       const bookie = getBookieBet(submission);
                       const total = submission.wager + bookie;
@@ -406,7 +410,11 @@ export default function PlayerPage() {
                 <ul style={{ paddingLeft: 16 }}>
                   {Object.values(allSubmissions)
                     .filter((sub) => sub.horse === "Horse B")
-                    .sort((a, b) => b.wager - a.wager)
+                    .sort((a, b) => {
+                      const totalA = a.wager + getBookieBet(a);
+                      const totalB = b.wager + getBookieBet(b);
+                      return totalB - totalA;
+                    })
                     .map((submission, idx) => {
                       const bookie = getBookieBet(submission);
                       const total = submission.wager + bookie;
