@@ -5,10 +5,13 @@ import { Submission, useSubmissions } from "./SubmissionsContext";
 import { API_BASE_URL, TOTAL_PLAYERS } from "../consts";
 
 export default function PlayerPage() {
+  // Ref for draft order section
   const [name, setName] = useState("");
   const [horse, setHorse] = useState<string>("");
   const [wager, setWager] = useState<number | "">("");
   const raceRef = useRef<HTMLDivElement>(null);
+  const draftOrderRef = useRef<HTMLDivElement>(null);
+
   // Add bookieBet to mySubmission
   const [mySubmission, setMySubmission] = useState<(Submission & { bookieBet: number; totalWager: number }) | null>(
     null
@@ -19,6 +22,13 @@ export default function PlayerPage() {
   // --- Race Animation State ---
   const [racing, setRacing] = useState(false);
   const [raceWinner, setRaceWinner] = useState<"Horse A" | "Horse B" | null>(null);
+
+  // Auto scroll to draft order when race completes and draft order appears
+  useEffect(() => {
+    if (!racing && raceWinner && draftOrderRef.current) {
+      draftOrderRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [racing, raceWinner]);
 
   // Start race animation when results arrive (i.e., admin triggers race)
   useEffect(() => {
@@ -114,6 +124,13 @@ export default function PlayerPage() {
   // Show race animation if racing or race just finished
   const showRace =
     racing || (results && results[0] && (results[0].horse === "Horse A" || results[0].horse === "Horse B"));
+
+  // Auto scroll to draft order when race completes and draft order appears
+  useEffect(() => {
+    if (!racing && raceWinner && draftOrderRef.current) {
+      draftOrderRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [racing, raceWinner]);
 
   const allSubmitted = allSubmissions && Object.keys(allSubmissions).length >= TOTAL_PLAYERS;
   return (
@@ -481,6 +498,8 @@ export default function PlayerPage() {
                   Winner: {raceWinner}!
                 </span>
               </div>
+              <div ref={draftOrderRef} />
+              <div ref={draftOrderRef} />
               <h3>The Draft Order!</h3>
               <ol style={{ paddingLeft: 20 }}>
                 {results &&
