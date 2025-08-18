@@ -146,36 +146,67 @@ export default function PlayerPage() {
   }, [racing, raceWinner]);
 
   const allSubmitted = allSubmissions && Object.keys(allSubmissions).length >= TOTAL_PLAYERS;
+  // Accordion state for rules
+  const [rulesOpen, setRulesOpen] = useState(false);
+
   return (
     <div style={{ maxWidth: "100%", margin: "0 auto", padding: "1rem" }}>
-      <h1 style={{ textAlign: "center", fontSize: 36, fontWeight: 900, marginBottom: 8 }}>
-        Fantasy Draft Order Show 2025
-      </h1>
-      <section
-        style={{
-          background: "#f5f5f5",
-          color: "#222",
-          borderRadius: 8,
-          padding: "1rem 1.5rem",
-          margin: "0 auto 2rem auto",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-          fontSize: 18,
-          lineHeight: 1.5,
-        }}
-      >
-        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 0.5rem 0" }}>Rules</h2>
-        <ul style={{ paddingLeft: 24, margin: 0 }}>
-          <li>
-            Enter your name, pick a horse from the famed 1938 Match Race of the Century, wager between 0-100 dollars,
-            then <strong>LOCK IN</strong>.
-          </li>
-          <li>After you lock in, your AI Bookie will add a random additional wager to your bet.</li>
-          <li>All bets are hidden until every player has locked in.</li>
-          <li>If your horse wins, your total wager is added to your wallet.</li>
-          <li>If your horse loses, your total wager is subtracted from your wallet.</li>
-          <li>Draft order is determined by your total (player + bookie) wager after the race concludes.</li>
-        </ul>
-      </section>
+      <h1 style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>Fantasy Draft Order Show 2025</h1>
+      <div style={{ margin: "0 auto 2rem auto" }}>
+        <button
+          type="button"
+          onClick={() => setRulesOpen((open) => !open)}
+          style={{
+            width: "100%",
+            textAlign: "left",
+            fontWeight: 700,
+            fontSize: 18,
+            background: "#f5f5f5",
+            color: "#222",
+            border: "1px solid #ccc",
+            borderRadius: 8,
+            padding: "0.75rem 1rem",
+            cursor: "pointer",
+            marginBottom: 0,
+            outline: "none",
+            transition: "background 0.2s, color 0.2s",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+          }}
+          aria-expanded={rulesOpen}
+        >
+          Rules
+          <span style={{ float: "right", fontWeight: 400 }}>{rulesOpen ? "▲" : "▼"}</span>
+        </button>
+        {rulesOpen && (
+          <section
+            style={{
+              background: "#f5f5f5",
+              color: "#222",
+              borderRadius: 8,
+              padding: "0.75rem 1.25rem 0.75rem 1.25rem",
+              fontSize: 15,
+              lineHeight: 1.5,
+              marginTop: 0,
+              marginBottom: 0,
+              border: "1px solid #ccc",
+              borderTop: "none",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
+            }}
+          >
+            <ul style={{ paddingLeft: 24, margin: 0 }}>
+              <li>
+                Enter your name, pick a horse from the famed 1938 Match Race of the Century, wager between 0-100
+                dollars, then <strong>LOCK IN</strong>.
+              </li>
+              <li>After you lock in, your AI Bookie will add a random additional wager to your bet.</li>
+              <li>All bets are hidden until every player has locked in.</li>
+              <li>If your horse wins, your total wager is added to your wallet.</li>
+              <li>If your horse loses, your total wager is subtracted from your wallet.</li>
+              <li>Draft order is determined by your total (player + bookie) wager after the race concludes.</li>
+            </ul>
+          </section>
+        )}
+      </div>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 16 }}>
           <label htmlFor="name" style={{ display: "block", marginBottom: 4 }}>
