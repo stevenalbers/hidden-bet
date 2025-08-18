@@ -5,10 +5,13 @@ import { Submission, useSubmissions } from "./SubmissionsContext";
 import { API_BASE_URL, TOTAL_PLAYERS } from "../consts";
 
 export default function PlayerPage() {
+  // Ref for draft order section
   const [name, setName] = useState("");
   const [horse, setHorse] = useState<string>("");
   const [wager, setWager] = useState<number | "">("");
   const raceRef = useRef<HTMLDivElement>(null);
+  const draftOrderRef = useRef<HTMLDivElement>(null);
+
   // Add bookieBet to mySubmission
   const [mySubmission, setMySubmission] = useState<(Submission & { bookieBet: number; totalWager: number }) | null>(
     null
@@ -19,6 +22,13 @@ export default function PlayerPage() {
   // --- Race Animation State ---
   const [racing, setRacing] = useState(false);
   const [raceWinner, setRaceWinner] = useState<"Horse A" | "Horse B" | null>(null);
+
+  // Auto scroll to draft order when race completes and draft order appears
+  useEffect(() => {
+    if (!racing && raceWinner && draftOrderRef.current) {
+      draftOrderRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [racing, raceWinner]);
 
   // Start race animation when results arrive (i.e., admin triggers race)
   useEffect(() => {
@@ -34,7 +44,6 @@ export default function PlayerPage() {
       setRaceWinner(null);
     }
   }, [results]);
-  console.log("submissions:", allSubmissions);
 
   // Fetch my submission on mount
   useEffect(() => {
@@ -96,15 +105,32 @@ export default function PlayerPage() {
       credentials: "include",
       body: JSON.stringify(payload),
     });
-    // Force a page refresh after submit
-    window.location.reload();
+    // No reload here; reload will be handled by useEffect when all bets are in
   };
+  // Only reload once when all bets are submitted
+  useEffect(() => {
+    if (allSubmissions && Object.keys(allSubmissions).length >= TOTAL_PLAYERS) {
+      // Only reload if not already reloaded in this session
+      const reloadedKey = "allBetsReloaded";
+      if (!sessionStorage.getItem(reloadedKey)) {
+        sessionStorage.setItem(reloadedKey, "true");
+        window.location.reload();
+      }
+    }
+  }, [allSubmissions]);
   // Accordion state for All Submissions
   const [accordionOpen, setAccordionOpen] = useState(false);
 
   // Show race animation if racing or race just finished
   const showRace =
     racing || (results && results[0] && (results[0].horse === "Horse A" || results[0].horse === "Horse B"));
+
+  // Auto scroll to draft order when race completes and draft order appears
+  useEffect(() => {
+    if (!racing && raceWinner && draftOrderRef.current) {
+      draftOrderRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [racing, raceWinner]);
 
   const allSubmitted = allSubmissions && Object.keys(allSubmissions).length >= TOTAL_PLAYERS;
   return (
@@ -309,16 +335,48 @@ export default function PlayerPage() {
                     .filter((sub) => sub.horse === "Horse A")
                     .sort((a, b) => b.wager - a.wager)
                     .map((submission, idx) => {
-                      // For display, generate a deterministic bookie bet per submission
                       const bookie = getBookieBet(submission);
                       const total = submission.wager + bookie;
+                      const tooltip = `Player: ${submission.wager}, Bookie: ${bookie}`;
                       return (
                         <li
                           key={submission.name + submission.wager + idx}
-                          style={{ wordBreak: "break-word", color: "inherit" }}
+                          style={{ wordBreak: "break-word", color: "inherit", position: "relative", cursor: "pointer" }}
+                          tabIndex={0}
                         >
-                          {submission.name}, My Wager: {submission.wager}, Bookie's Wager: {bookie}, Total Wager:{" "}
-                          <b>{total}</b>
+                          <span style={{ fontWeight: 700 }}>{submission.name}:</span> <span>{total}</span>
+                          <span
+                            className="player-tooltip"
+                            style={{
+                              visibility: "hidden",
+                              opacity: 0,
+                              position: "absolute",
+                              //   left: '15%',
+                              //   bottom: '100%',
+                              transform: "translateX(-50%) translateY(-30px)",
+                              background: "#222",
+                              color: "#fff",
+                              padding: "6px 12px",
+                              borderRadius: 6,
+                              whiteSpace: "nowrap",
+                              zIndex: 10,
+                              fontSize: 14,
+                              transition: "opacity 0.2s",
+                              marginLeft: 0,
+                              pointerEvents: "none",
+                            }}
+                          >
+                            {tooltip}
+                          </span>
+                          <style>{`
+                            li[tabindex="0"]:hover .player-tooltip,
+                            li[tabindex="0"]:focus .player-tooltip,
+                            li[tabindex="0"]:active .player-tooltip {
+                              visibility: visible !important;
+                              opacity: 1 !important;
+                              pointer-events: auto;
+                            }
+                          `}</style>
                         </li>
                       );
                     })}
@@ -334,13 +392,46 @@ export default function PlayerPage() {
                     .map((submission, idx) => {
                       const bookie = getBookieBet(submission);
                       const total = submission.wager + bookie;
+                      const tooltip = `Player: ${submission.wager}, Bookie: ${bookie}`;
                       return (
                         <li
                           key={submission.name + submission.wager + idx}
-                          style={{ wordBreak: "break-word", color: "inherit" }}
+                          style={{ wordBreak: "break-word", color: "inherit", position: "relative", cursor: "pointer" }}
+                          tabIndex={0}
                         >
-                          {submission.name}, My Wager: {submission.wager}, Bookie's Wager: {bookie}, Total Wager:{" "}
-                          <b>{total}</b>
+                          <span style={{ fontWeight: 700 }}>{submission.name}:</span> <span>{total}</span>
+                          <span
+                            className="player-tooltip"
+                            style={{
+                              visibility: "hidden",
+                              opacity: 0,
+                              position: "absolute",
+                              //   left: '100%',
+                              //   top: '50%',
+                              transform: "translateX(-100%) translateY(-30px)",
+                              background: "#222",
+                              color: "#fff",
+                              padding: "6px 12px",
+                              borderRadius: 6,
+                              whiteSpace: "nowrap",
+                              zIndex: 10,
+                              fontSize: 14,
+                              transition: "opacity 0.2s",
+                              marginLeft: 8,
+                              pointerEvents: "none",
+                            }}
+                          >
+                            {tooltip}
+                          </span>
+                          <style>{`
+                            li[tabindex="0"]:hover .player-tooltip,
+                            li[tabindex="0"]:focus .player-tooltip,
+                            li[tabindex="0"]:active .player-tooltip {
+                              visibility: visible !important;
+                              opacity: 1 !important;
+                              pointer-events: auto;
+                            }
+                          `}</style>
                         </li>
                       );
                     })}
@@ -407,7 +498,9 @@ export default function PlayerPage() {
                   Winner: {raceWinner}!
                 </span>
               </div>
-              <h3>Declared Winner Results</h3>
+              <div ref={draftOrderRef} />
+              <div ref={draftOrderRef} />
+              <h3>The Draft Order!</h3>
               <ol style={{ paddingLeft: 20 }}>
                 {results &&
                   results.map((r, idx) => {
@@ -415,14 +508,59 @@ export default function PlayerPage() {
                     const total = r.wager + bookie;
                     // Calculate result using total wager
                     let result = 0;
-                    if (r.horse === raceWinner) {
+                    const isWinner = r.horse === raceWinner;
+                    if (isWinner) {
                       result = 150 + total;
                     } else {
                       result = 150 - total;
                     }
+                    const sign = isWinner ? "+" : "-";
+                    // Place number and style
+                    const placeNumber = idx + 1;
+                    let placeStyle = {};
+                    if (idx === 0) {
+                      placeStyle = {
+                        fontSize: 28,
+                        fontWeight: 900,
+                        color: "#FFD700",
+                        marginRight: 8,
+                        verticalAlign: "middle",
+                      };
+                    } else if (idx === 1) {
+                      placeStyle = {
+                        fontSize: 22,
+                        fontWeight: 800,
+                        color: "#C0C0C0",
+                        marginRight: 8,
+                        verticalAlign: "middle",
+                      };
+                    } else if (idx === 2) {
+                      placeStyle = {
+                        fontSize: 18,
+                        fontWeight: 700,
+                        color: "#CD7F32",
+                        marginRight: 8,
+                        verticalAlign: "middle",
+                      };
+                    } else {
+                      placeStyle = {
+                        fontSize: 16,
+                        fontWeight: 600,
+                        color: "#888",
+                        marginRight: 8,
+                        verticalAlign: "middle",
+                      };
+                    }
                     return (
-                      <li key={r.name + r.result + idx} style={{ wordBreak: "break-word" }}>
-                        {r.name}, Total Wager: <b>{total}</b>, Result: {result}
+                      <li
+                        key={r.name + r.result + idx}
+                        style={{ wordBreak: "break-word", display: "flex", alignItems: "center", marginBottom: 4 }}
+                      >
+                        <span style={placeStyle}>{placeNumber}</span>
+                        <span>
+                          <b>{r.name}</b>: Race result: {sign}
+                          {total}, Grand total: <b>{result}</b>
+                        </span>
                       </li>
                     );
                   })}
