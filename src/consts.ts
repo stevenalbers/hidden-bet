@@ -3,4 +3,4 @@ export const API_BASE_URL =
 export const WS_URL =
   window.location.hostname === "localhost" ? "ws://localhost:3001" : `wss://hidden-bet-api.onrender.com`;
 
-  export const TOTAL_PLAYERS = 3;
+export const TOTAL_PLAYERS = 10;

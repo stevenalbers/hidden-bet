@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 
 // Enhanced horse race animation component
-export function HorseRaceAnimation({ winner, finished, onRaceEnd }: {
+export function HorseRaceAnimation({
+  winner,
+  finished,
+  onRaceEnd,
+}: {
   winner: "Horse A" | "Horse B" | null;
   finished?: boolean;
   onRaceEnd?: () => void;
@@ -73,8 +77,9 @@ export function HorseRaceAnimation({ winner, finished, onRaceEnd }: {
     function animate(ts: number) {
       if (start === null) start = ts;
       const elapsed = ts - start;
-      // Winner finishes at 10s, loser at 10.5s
-      const t = Math.min(elapsed, 10500);
+      // Winner finishes at 10s, loser at 11.2s (longer delay for loser)
+      const LOSER_DELAY = 200; // ms
+      const t = Math.min(elapsed, 10000 + LOSER_DELAY);
       const lead = getLeadAt(t);
       // Add some jitter for realism
       const jitterA = (Math.random() - 0.5) * 0.01;
@@ -82,14 +87,21 @@ export function HorseRaceAnimation({ winner, finished, onRaceEnd }: {
       let pctA, pctB;
       if (lead === "A") {
         pctA = Math.min(t / 10000 + 0.01 + jitterA, 1);
-        pctB = Math.min(t / 10000 - 0.01 + jitterB, 1, pctA - 0.01);
+        pctB = Math.min(t / 10000 - 0.01 + jitterB, 0.99, pctA - 0.01); // stall loser at 99%
       } else {
         pctB = Math.min(t / 10000 + 0.01 + jitterB, 1);
-        pctA = Math.min(t / 10000 - 0.01 + jitterA, 1, pctB - 0.01);
+        pctA = Math.min(t / 10000 - 0.01 + jitterA, 0.99, pctB - 0.01);
       }
-      // Loser slows down after 10s
-      if (winner === "Horse A" && t > 10000) pctB = Math.min((t - 10000) / 500 + 1, 1);
-      if (winner === "Horse B" && t > 10000) pctA = Math.min((t - 10000) / 500 + 1, 1);
+      // Loser stalls at 99% until LOSER_DELAY is up, then finishes
+      if (winner === "Horse A") {
+        if (t > 10000) {
+          pctB = Math.min(0.99 + ((t - 10000) / LOSER_DELAY) * 0.01, 1);
+        }
+      } else if (winner === "Horse B") {
+        if (t > 10000) {
+          pctA = Math.min(0.99 + ((t - 10000) / LOSER_DELAY) * 0.01, 1);
+        }
+      }
       setProgressA(pctA);
       setProgressB(pctB);
       if (pctA < 1 || pctB < 1) {
@@ -161,9 +173,7 @@ export function HorseRaceAnimation({ winner, finished, onRaceEnd }: {
           pointerEvents: "none",
         }}
       >
-        <span style={finished && winner === "Horse A" ? highlightStyle : {}}>
-          Horse A
-        </span>
+        <span style={finished && winner === "Horse A" ? highlightStyle : {}}>Horse A</span>
       </div>
       {/* Horse A Emoji (animated) */}
       <div
@@ -203,9 +213,7 @@ export function HorseRaceAnimation({ winner, finished, onRaceEnd }: {
           pointerEvents: "none",
         }}
       >
-        <span style={finished && winner === "Horse B" ? highlightStyle : {}}>
-          Horse B
-        </span>
+        <span style={finished && winner === "Horse B" ? highlightStyle : {}}>Horse B</span>
       </div>
       {/* Horse B Emoji (animated) */}
       <div
