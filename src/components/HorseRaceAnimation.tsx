@@ -1,3 +1,4 @@
+import { horseMap } from "../consts";
 import React, { useEffect, useState } from "react";
 
 // Enhanced horse race animation component
@@ -173,7 +174,7 @@ export function HorseRaceAnimation({
           pointerEvents: "none",
         }}
       >
-        <span style={finished && winner === "Horse A" ? highlightStyle : {}}>Horse A</span>
+        <span style={finished && winner === "Horse A" ? highlightStyle : {}}>{horseMap["Horse A"]}</span>
       </div>
       {/* Horse A Emoji (animated) */}
       <div
@@ -213,7 +214,7 @@ export function HorseRaceAnimation({
           pointerEvents: "none",
         }}
       >
-        <span style={finished && winner === "Horse B" ? highlightStyle : {}}>Horse B</span>
+        <span style={finished && winner === "Horse B" ? highlightStyle : {}}>{horseMap["Horse B"]}</span>
       </div>
       {/* Horse B Emoji (animated) */}
       <div

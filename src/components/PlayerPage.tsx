@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 // Ref for the race animation container
 import { HorseRaceAnimation, ConfettiExplosion } from "./HorseRaceAnimation";
 import { Submission, useSubmissions } from "./SubmissionsContext";
-import { API_BASE_URL, TOTAL_PLAYERS } from "../consts";
+import { API_BASE_URL, horseMap, TOTAL_PLAYERS } from "../consts";
 
 export default function PlayerPage() {
   // Ref for draft order section
@@ -53,7 +53,18 @@ export default function PlayerPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data && data.submission) {
-          setMySubmission(data.submission);
+          setMySubmission((prev) => {
+            // Only update if backend submission is different from optimistic one
+            if (
+              !prev ||
+              prev.name !== data.submission.name ||
+              prev.horse !== data.submission.horse ||
+              prev.wager !== data.submission.wager
+            ) {
+              return data.submission;
+            }
+            return prev;
+          });
         } else {
           setMySubmission(null);
         }
@@ -64,7 +75,7 @@ export default function PlayerPage() {
   useEffect(() => {
     // Only reset mySubmission if allSubmissions is not null (i.e., after a clear),
     // and mySubmission is not present in allSubmissions
-    if (mySubmission && allSubmissions !== null) {
+    if (mySubmission && !!allSubmissions && Object.keys(allSubmissions).length <= 0) {
       const stillExists = Object.values(allSubmissions).some(
         (sub) => sub.name === mySubmission.name && sub.horse === mySubmission.horse && sub.wager === mySubmission.wager
       );
@@ -98,6 +109,8 @@ export default function PlayerPage() {
     // Generate Bookie bet and persist for this submission
     const bookie = getBookieBet(payload);
     setBookieBet(bookie);
+    // Optimistically update mySubmission so UI updates immediately
+    setMySubmission({ ...payload, bookieBet: bookie, totalWager: wagerVal + bookie });
     // Send to backend: only send player wager (not bookie bet)
     await fetch(`${API_BASE_URL}/submit`, {
       method: "POST",
@@ -162,7 +175,7 @@ export default function PlayerPage() {
                 disabled={!!mySubmission}
                 required
               />
-              Horse A
+              Seabiscuit
             </label>
             <label>
               <input
@@ -174,7 +187,7 @@ export default function PlayerPage() {
                 disabled={!!mySubmission}
                 required
               />
-              Horse B
+              War Admiral
             </label>
           </div>
         </div>
@@ -229,7 +242,7 @@ export default function PlayerPage() {
           <p>Your submission:</p>
           <ul>
             <li>Name: {mySubmission.name}</li>
-            <li>Horse: {mySubmission.horse}</li>
+            <li>Horse: {horseMap[mySubmission.horse]}</li>
             <li>My Wager: {mySubmission.wager}</li>
             <li>
               Bookie's Wager:{" "}
@@ -332,9 +345,9 @@ export default function PlayerPage() {
                 transition: "background 0.2s, color 0.2s",
               }}
             >
-              {/* Horse A Column */}
+              {/* Seabiscuit Column */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <h4 style={{ color: "inherit" }}>Horse A</h4>
+                <h4 style={{ color: "inherit" }}>Seabiscuit</h4>
                 <ul style={{ paddingLeft: 16 }}>
                   {Object.values(allSubmissions)
                     .filter((sub) => sub.horse === "Horse A")
@@ -387,9 +400,9 @@ export default function PlayerPage() {
                     })}
                 </ul>
               </div>
-              {/* Horse B Column */}
+              {/* War Admiral Column */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <h4 style={{ color: "inherit" }}>Horse B</h4>
+                <h4 style={{ color: "inherit" }}>War Admiral</h4>
                 <ul style={{ paddingLeft: 16 }}>
                   {Object.values(allSubmissions)
                     .filter((sub) => sub.horse === "Horse B")
@@ -500,7 +513,7 @@ export default function PlayerPage() {
                     marginTop: 8,
                   }}
                 >
-                  Winner: {raceWinner}!
+                  Winner: {horseMap[raceWinner]}!
                 </span>
               </div>
               <div ref={draftOrderRef} />
