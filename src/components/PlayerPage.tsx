@@ -146,12 +146,71 @@ export default function PlayerPage() {
   }, [racing, raceWinner]);
 
   const allSubmitted = allSubmissions && Object.keys(allSubmissions).length >= TOTAL_PLAYERS;
+  // Accordion state for rules
+  const [rulesOpen, setRulesOpen] = useState(false);
+
   return (
     <div style={{ maxWidth: "100%", margin: "0 auto", padding: "1rem" }}>
+      <h1 style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>Fantasy Draft Order Show 2025</h1>
+      <div style={{ margin: "0 auto 2rem auto" }}>
+        <button
+          type="button"
+          onClick={() => setRulesOpen((open) => !open)}
+          style={{
+            width: "100%",
+            textAlign: "left",
+            fontWeight: 700,
+            fontSize: 18,
+            background: "#f5f5f5",
+            color: "#222",
+            border: "1px solid #ccc",
+            borderRadius: 8,
+            padding: "0.75rem 1rem",
+            cursor: "pointer",
+            marginBottom: 0,
+            outline: "none",
+            transition: "background 0.2s, color 0.2s",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+          }}
+          aria-expanded={rulesOpen}
+        >
+          Rules
+          <span style={{ float: "right", fontWeight: 400 }}>{rulesOpen ? "▲" : "▼"}</span>
+        </button>
+        {rulesOpen && (
+          <section
+            style={{
+              background: "#f5f5f5",
+              color: "#222",
+              borderRadius: 8,
+              padding: "0.75rem 1.25rem 0.75rem 1.25rem",
+              fontSize: 15,
+              lineHeight: 1.5,
+              marginTop: 0,
+              marginBottom: 0,
+              border: "1px solid #ccc",
+              borderTop: "none",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
+            }}
+          >
+            <ul style={{ paddingLeft: 24, margin: 0 }}>
+              <li>
+                Enter your name, pick a horse from the famed 1938 Match Race of the Century, wager between 0-100
+                dollars, then <strong>LOCK IN</strong>.
+              </li>
+              <li>After you lock in, your AI Bookie will add a random additional wager to your bet.</li>
+              <li>All bets are hidden until every player has locked in.</li>
+              <li>If your horse wins, your total wager is added to your wallet.</li>
+              <li>If your horse loses, your total wager is subtracted from your wallet.</li>
+              <li>Draft order is determined by your total (player + bookie) wager after the race concludes.</li>
+            </ul>
+          </section>
+        )}
+      </div>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 16 }}>
           <label htmlFor="name" style={{ display: "block", marginBottom: 4 }}>
-            Your name:
+            Player name:
           </label>
           <input
             id="name"
@@ -163,7 +222,7 @@ export default function PlayerPage() {
           />
         </div>
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>Your horse:</label>
+          <label style={{ display: "block", marginBottom: 4 }}>Choose a horse:</label>
           <div style={{ display: "flex", gap: 12 }}>
             <label>
               <input
@@ -193,7 +252,7 @@ export default function PlayerPage() {
         </div>
         <div style={{ marginBottom: 16 }}>
           <label htmlFor="wager" style={{ display: "block", marginBottom: 4 }}>
-            Your wager (0-100):
+            Make a wager (0-100):
           </label>
           <input
             id="wager"
@@ -236,14 +295,23 @@ export default function PlayerPage() {
         >
           {mySubmission ? "Locked in" : "Lock in"}
         </button>
+        <br />
+        {!mySubmission && (
+          <span style={{ fontSize: 10 }}>
+            (Warning: Once you lock in, you are <strong>LOCKED IN</strong>. There is no going back.Choose your horse and
+            bet wisely.)
+          </span>
+        )}
       </form>
       {mySubmission && (
         <div>
-          <p>Your submission:</p>
+          <p>
+            You are <strong>LOCKED IN</strong>. Your wager:
+          </p>
           <ul>
             <li>Name: {mySubmission.name}</li>
             <li>Horse: {horseMap[mySubmission.horse]}</li>
-            <li>My Wager: {mySubmission.wager}</li>
+            <li>Player's Wager: {mySubmission.wager}</li>
             <li>
               Bookie's Wager:{" "}
               {typeof mySubmission.bookieBet === "number" ? mySubmission.bookieBet : getBookieBet(mySubmission)}
