@@ -71,19 +71,21 @@ export default function PlayerPage() {
       });
   }, []);
 
-  // If my submission is cleared from allSubmissions, allow resubmission
+  // Track if allSubmissions has ever been populated (to avoid clearing mySubmission on first submit)
+  const [allSubmissionsPopulated, setAllSubmissionsPopulated] = useState(false);
   useEffect(() => {
-    // Only reset mySubmission if allSubmissions is not null (i.e., after a clear),
-    // and mySubmission is not present in allSubmissions
-    if (mySubmission && !!allSubmissions && Object.keys(allSubmissions).length <= 0) {
-      const stillExists = Object.values(allSubmissions).some(
-        (sub) => sub.name === mySubmission.name && sub.horse === mySubmission.horse && sub.wager === mySubmission.wager
-      );
-      if (!stillExists) {
-        setMySubmission(null);
-      }
+    if (allSubmissions && Object.keys(allSubmissions).length > 0) {
+      setAllSubmissionsPopulated(true);
     }
-  }, [allSubmissions, mySubmission]);
+  }, [allSubmissions]);
+
+  // Only clear mySubmission if allSubmissions has been populated at least once AND is now empty (i.e., after a reset/clear)
+  useEffect(() => {
+    if (!allSubmissionsPopulated) return;
+    if (mySubmission && allSubmissions && Object.keys(allSubmissions).length === 0) {
+      setMySubmission(null);
+    }
+  }, [allSubmissions, mySubmission, allSubmissionsPopulated]);
 
   // Bookie bet logic: generate once per user per submission and persist in localStorage
   function getBookieBet(sub: Submission) {
@@ -151,7 +153,7 @@ export default function PlayerPage() {
 
   return (
     <div style={{ maxWidth: "100%", margin: "0 auto", padding: "1rem" }}>
-      <h1 style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>Fantasy Draft Order Show 2025</h1>
+      <h1 style={{ fontSize: 36, fontWeight: 900, marginBottom: 16 }}>Fantasy Draft Order Show 2025-2026</h1>
       <div style={{ margin: "0 auto 2rem auto" }}>
         <button
           type="button"
@@ -284,8 +286,8 @@ export default function PlayerPage() {
             fontSize: 18,
             borderRadius: 8,
             border: "none",
-            background: "var(--submit-bg, #222)",
-            color: "var(--submit-fg, #fff)",
+            background: !mySubmission ? "#d32f2f" : "var(--submit-bg, #222)",
+            color: !mySubmission ? "#fff" : "var(--submit-fg, #fff)",
             boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
             cursor: mySubmission ? "not-allowed" : "pointer",
             marginTop: 8,
@@ -298,8 +300,8 @@ export default function PlayerPage() {
         <br />
         {!mySubmission && (
           <span style={{ fontSize: 10 }}>
-            (Warning: Once you lock in, you are <strong>LOCKED IN</strong>. There is no going back.Choose your horse and
-            bet wisely.)
+            (Warning: Once you lock in, you are <strong>LOCKED IN</strong>. There is no going back. Choose your horse
+            and bet wisely.)
           </span>
         )}
       </form>
