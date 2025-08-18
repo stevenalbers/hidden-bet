@@ -148,10 +148,37 @@ export default function PlayerPage() {
   const allSubmitted = allSubmissions && Object.keys(allSubmissions).length >= TOTAL_PLAYERS;
   return (
     <div style={{ maxWidth: "100%", margin: "0 auto", padding: "1rem" }}>
+      <h1 style={{ textAlign: "center", fontSize: 36, fontWeight: 900, marginBottom: 8 }}>
+        Fantasy Draft Order Show 2025
+      </h1>
+      <section
+        style={{
+          background: "#f5f5f5",
+          color: "#222",
+          borderRadius: 8,
+          padding: "1rem 1.5rem",
+          margin: "0 auto 2rem auto",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+          fontSize: 18,
+          lineHeight: 1.5,
+        }}
+      >
+        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 0.5rem 0" }}>Rules</h2>
+        <ul style={{ paddingLeft: 24, margin: 0 }}>
+          <li>
+            Enter your name, pick a horse from the famed 1938 Match Race of the Century, and wager between 0-100
+            dollars.
+          </li>
+          <li>After all players submit, each player's AI Bookie will secretly add a random wager to each bet.</li>
+          <li>Draft order is determined by your total (player + bookie) wager on the winning horse.</li>
+          <li>Highest total on the winning horse gets first pick, and so on.</li>
+          <li>If your horse loses, your total is subtracted from the base score.</li>
+        </ul>
+      </section>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 16 }}>
           <label htmlFor="name" style={{ display: "block", marginBottom: 4 }}>
-            Your name:
+            Player name:
           </label>
           <input
             id="name"
@@ -163,7 +190,7 @@ export default function PlayerPage() {
           />
         </div>
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>Your horse:</label>
+          <label style={{ display: "block", marginBottom: 4 }}>Choose a horse:</label>
           <div style={{ display: "flex", gap: 12 }}>
             <label>
               <input
@@ -193,7 +220,7 @@ export default function PlayerPage() {
         </div>
         <div style={{ marginBottom: 16 }}>
           <label htmlFor="wager" style={{ display: "block", marginBottom: 4 }}>
-            Your wager (0-100):
+            Make a wager (0-100):
           </label>
           <input
             id="wager"
@@ -236,14 +263,20 @@ export default function PlayerPage() {
         >
           {mySubmission ? "Locked in" : "Lock in"}
         </button>
+        <br />
+        {!mySubmission && (
+          <span style={{ fontSize: 10 }}>
+            (Warning: Once you lock in, you are <strong>LOCKED IN</strong>. There is no going back. That's not how it works.)
+          </span>
+        )}
       </form>
       {mySubmission && (
         <div>
-          <p>Your submission:</p>
+          <p>Your wager:</p>
           <ul>
             <li>Name: {mySubmission.name}</li>
             <li>Horse: {horseMap[mySubmission.horse]}</li>
-            <li>My Wager: {mySubmission.wager}</li>
+            <li>Player's Wager: {mySubmission.wager}</li>
             <li>
               Bookie's Wager:{" "}
               {typeof mySubmission.bookieBet === "number" ? mySubmission.bookieBet : getBookieBet(mySubmission)}
