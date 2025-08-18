@@ -166,13 +166,14 @@ export default function PlayerPage() {
         <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 0.5rem 0" }}>Rules</h2>
         <ul style={{ paddingLeft: 24, margin: 0 }}>
           <li>
-            Enter your name, pick a horse from the famed 1938 Match Race of the Century, and wager between 0-100
-            dollars.
+            Enter your name, pick a horse from the famed 1938 Match Race of the Century, wager between 0-100 dollars,
+            then <strong>LOCK IN</strong>.
           </li>
-          <li>After all players submit, each player's AI Bookie will secretly add a random wager to each bet.</li>
-          <li>Draft order is determined by your total (player + bookie) wager on the winning horse.</li>
-          <li>Highest total on the winning horse gets first pick, and so on.</li>
-          <li>If your horse loses, your total is subtracted from the base score.</li>
+          <li>After you lock in, your AI Bookie will add a random additional wager to your bet.</li>
+          <li>All bets are hidden until every player has locked in.</li>
+          <li>If your horse wins, your total wager is added to your wallet.</li>
+          <li>If your horse loses, your total wager is subtracted from your wallet.</li>
+          <li>Draft order is determined by your total (player + bookie) wager after the race concludes.</li>
         </ul>
       </section>
       <form onSubmit={handleSubmit}>
@@ -266,13 +267,16 @@ export default function PlayerPage() {
         <br />
         {!mySubmission && (
           <span style={{ fontSize: 10 }}>
-            (Warning: Once you lock in, you are <strong>LOCKED IN</strong>. There is no going back. That's not how it works.)
+            (Warning: Once you lock in, you are <strong>LOCKED IN</strong>. There is no going back.Choose your horse and
+            bet wisely.)
           </span>
         )}
       </form>
       {mySubmission && (
         <div>
-          <p>Your wager:</p>
+          <p>
+            You are <strong>LOCKED IN</strong>. Your wager:
+          </p>
           <ul>
             <li>Name: {mySubmission.name}</li>
             <li>Horse: {horseMap[mySubmission.horse]}</li>
